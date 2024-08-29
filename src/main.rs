@@ -1,112 +1,315 @@
-use rdev::{
-    Key as rdev_key,  // https://docs.rs/rdev/latest/rdev/enum.Key.html
-    // Event as rdev_event,
-};
+mod libs {
+    use rdev::{
+        Key as rdev_key,  // https://docs.rs/rdev/latest/rdev/enum.Key.html
+    };
 
-#[allow(dead_code)]
-fn sleep(millis: u64) {
-    use std::{thread, time};
+    // 休息
+    #[allow(dead_code)]
+    pub fn sleep(millis: u64) {
+        use std::{thread, time};
 
-    let ten_millis = time::Duration::from_millis(millis);
-    thread::sleep(ten_millis);
+        let ten_millis = time::Duration::from_millis(millis);
+        thread::sleep(ten_millis);
+    }
+
+    // 貼上
+    #[allow(dead_code)]
+    pub fn past_text<S: AsRef<str>>(msg: S) {
+        let msg = String::from(msg.as_ref());
+        // 剪貼簿 library
+        extern crate clipboard;
+        use clipboard::ClipboardProvider;
+        use clipboard::ClipboardContext;
+
+        // 滑鼠+鍵盤 事件&控制 library
+        use rdev::{simulate, EventType};
+
+        // 將文字放倒剪貼簿中
+        let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+        ctx.set_contents(msg).unwrap();
+
+        // 模擬按下 Ctrl + V (貼上)
+        simulate(&EventType::KeyPress(rdev_key::ControlLeft)).unwrap();
+        simulate(&EventType::KeyPress(rdev_key::KeyV)).unwrap();
+        simulate(&EventType::KeyRelease(rdev_key::KeyV)).unwrap();
+        simulate(&EventType::KeyRelease(rdev_key::ControlLeft)).unwrap();
+    }
+
+    // 打鍵盤
+    #[allow(dead_code)]
+    pub fn type_kb(key: rdev_key) {
+        use rdev::{simulate, EventType};
+
+        simulate(&EventType::KeyPress(key)).unwrap();
+        simulate(&EventType::KeyRelease(key)).unwrap();
+    }
+
+    // 按下鍵盤
+    #[allow(dead_code)]
+    pub fn press_kb(key: rdev_key) {
+        use rdev::{simulate, EventType};
+
+        simulate(&EventType::KeyPress(key)).unwrap();
+    }
+
+    // 放開鍵盤
+    #[allow(dead_code)]
+    pub fn release_kb(key: rdev_key) {
+        use rdev::{simulate, EventType};
+
+        simulate(&EventType::KeyRelease(key)).unwrap();
+    }
+
+    // 滑鼠移動
+    #[allow(dead_code)]
+    pub fn move_ms(x: f64, y: f64) {
+        use rdev::{simulate, EventType};
+
+        simulate(&EventType::MouseMove { x: x, y: y }).unwrap();
+    }
+
+    // 滑鼠click
+    #[allow(dead_code)]
+    pub fn click_ms() {
+        use rdev::{simulate, Button, EventType};
+
+        simulate(&EventType::ButtonPress(Button::Left)).unwrap();
+        simulate(&EventType::ButtonRelease(Button::Left)).unwrap();
+    }
+
+    // 滑鼠左鍵按下
+    #[allow(dead_code)]
+    pub fn left_press_ms() {
+        use rdev::{simulate, Button, EventType};
+
+        simulate(&EventType::ButtonPress(Button::Left)).unwrap();
+    }
+
+    // 滑鼠左鍵放開
+    #[allow(dead_code)]
+    pub fn left_release_ms() {
+        use rdev::{simulate, Button, EventType};
+
+        simulate(&EventType::ButtonRelease(Button::Left)).unwrap();
+    }
+
+    // 滑鼠右鍵
+    #[allow(dead_code)]
+    pub fn rclick_ms() {
+        use rdev::{simulate, Button, EventType};
+
+        simulate(&EventType::ButtonPress(Button::Right)).unwrap();
+        simulate(&EventType::ButtonRelease(Button::Right)).unwrap();
+    }
+
+    // 滑鼠右鍵按下
+    #[allow(dead_code)]
+    pub fn right_press_ms() {
+        use rdev::{simulate, Button, EventType};
+
+        simulate(&EventType::ButtonPress(Button::Right)).unwrap();
+    }
+
+    // 滑鼠右鍵放開
+    #[allow(dead_code)]
+    pub fn right_release_ms() {
+        use rdev::{simulate, Button, EventType};
+
+        simulate(&EventType::ButtonRelease(Button::Right)).unwrap();
+    }
+
+    // 查 type
+    #[allow(dead_code)]
+    pub fn type_of<T>(_: &T) -> String {
+        return String::from(std::any::type_name::<T>());
+    }
+
+    // 計算耗時
+    #[allow(dead_code)]
+    pub fn elapsed_fn<F: Fn() -> ()>(cb: F) {
+        use std::time::Instant;
+        let start = Instant::now();
+        cb();
+        println!("耗時: {:?}", start.elapsed());
+    }
+
+    // 退出程式
+    #[allow(dead_code)]
+    pub fn exit() {
+        use std::process;
+        process::exit(0);
+    }
 }
 
-#[allow(dead_code)]
-fn past_text<S: AsRef<str>>(msg: S) {
-    let msg = String::from(msg.as_ref());
-    // 剪貼簿 library
-    extern crate clipboard;
-    use clipboard::ClipboardProvider;
-    use clipboard::ClipboardContext;
+mod pc_ctrl {
+    use rdev::{
+        Key as rdev_key,    // https://docs.rs/rdev/latest/rdev/enum.Key.html
+        Button as rdev_btn, // https://docs.rs/rdev/latest/rdev/enum.Button.html
+    };
+    use crate::libs;
 
-    // 滑鼠+鍵盤 事件&控制 library
-    use rdev::{simulate, EventType};
+    #[derive(Copy, Clone)]
+    #[allow(dead_code)]
+    pub enum State {
+        Waiting,
+        Hello,
+    }
+    impl State {
+        fn action_mapping(&self) -> Box<dyn StateAction> {
+            match self {
+                State::Waiting => {
+                    return Box::new(StateWaiting{..Default::default()});
+                }
+                State::Hello => {
+                    return Box::new(StateHello{});
+                }
+            }
+        }
 
-    // 將文字放倒剪貼簿中
-    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-    ctx.set_contents(msg).unwrap();
+        #[allow(unused_variables)]
+        pub fn key_press(&self, key: rdev_key) -> State {
+            // println!("KeyPress: {:?} ({})", key, libs::type_of(&key));
+            let mut action = self.action_mapping();
+            if let Some(new_state) = action.key_press(key) {
+                return new_state;
+            }
+            *self
+        }
 
-    // 模擬按下 Ctrl + V (貼上)
-    simulate(&EventType::KeyPress(rdev_key::ControlLeft)).unwrap();
-    simulate(&EventType::KeyPress(rdev_key::KeyV)).unwrap();
-    simulate(&EventType::KeyRelease(rdev_key::KeyV)).unwrap();
-    simulate(&EventType::KeyRelease(rdev_key::ControlLeft)).unwrap();
-}
+        #[allow(unused_variables)]
+        pub fn key_release(&self, key: rdev_key) -> State {
+            // println!("KeyRelease: {:?} ({})", key, libs::type_of(&key));
+            let mut action = self.action_mapping();
+            if let Some(new_state) = action.key_release(key) {
+                return new_state;
+            }
+            *self
+        }
 
-#[allow(dead_code)]
-fn type_kb(key: rdev_key) {
-    use rdev::{simulate, EventType};
+        #[allow(unused_variables)]
+        pub fn mouse_move(&self, x: f64, y: f64) -> State {
+            // println!("MouseMove: ({}, {})", x, y);
+            let mut action = self.action_mapping();
+            if let Some(new_state) = action.mouse_move(x, y) {
+                return new_state;
+            }
+            *self
+        }
 
-    simulate(&EventType::KeyPress(key)).unwrap();
-    simulate(&EventType::KeyRelease(key)).unwrap();
-}
+        #[allow(unused_variables)]
+        pub fn mouse_button_press(&self, button: rdev_btn) -> State {
+            // println!("ButtonPress: {:?} ({})", button, libs::type_of(&button));
+            let mut action = self.action_mapping();
+            if let Some(new_state) = action.mouse_button_press(button) {
+                return new_state;
+            }
+            *self
+        }
 
-#[allow(dead_code)]
-fn press_kb(key: rdev_key) {
-    use rdev::{simulate, EventType};
+        #[allow(unused_variables)]
+        pub fn mouse_button_release(&self, button: rdev_btn) -> State {
+            // println!("ButtonRelease: {:?} ({})", button, libs::type_of(&button));
+            let mut action = self.action_mapping();
+            if let Some(new_state) = action.mouse_button_release(button) {
+                return new_state;
+            }
+            *self
+        }
+    }
 
-    simulate(&EventType::KeyPress(key)).unwrap();
-}
+    #[allow(dead_code)]
+    trait StateAction {
+        fn enter(&mut self) {}
+        fn out(&mut self) {}
+        fn change(&mut self, new_state: State) -> State {
+            self.out();
+            let mut new_action = new_state.action_mapping();
+            new_action.enter();
+            new_state
+        }
+        #[allow(unused_variables)]
+        fn key_press(&mut self, key: rdev_key) -> Option<State> { None }
+        #[allow(unused_variables)]
+        fn key_release(&mut self, key: rdev_key) -> Option<State> { None }
+        #[allow(unused_variables)]
+        fn mouse_move(&mut self, x: f64, y: f64) -> Option<State> { None }
+        #[allow(unused_variables)]
+        fn mouse_button_press(&mut self, button: rdev_btn) -> Option<State> { None }
+        #[allow(unused_variables)]
+        fn mouse_button_release(&mut self, button: rdev_btn) -> Option<State> { None }
+    }
+    struct StateWaiting { flag1: bool }
+    impl Default for StateWaiting {
+        fn default() -> StateWaiting {
+            StateWaiting {
+                flag1: false,
+            }
+        }
+    }
+    impl StateAction for StateWaiting {
+        fn key_press(&mut self, key: rdev_key) -> Option<State> {
+            match key {
+                rdev_key::ControlRight => {
+                    if !self.flag1 {
+                        self.flag1 = true;
+                        libs::type_kb(rdev_key::Return);
+                        libs::past_text("請選擇 - h:hello");
+                    }
+                }
+                rdev_key::KeyH => {
+                    if self.flag1 {
+                        libs::type_kb(rdev_key::End);
+                        libs::press_kb(rdev_key::ShiftLeft);
+                        libs::type_kb(rdev_key::Home);
+                        libs::release_kb(rdev_key::ShiftLeft);
+                        libs::type_kb(rdev_key::Backspace);
+                        libs::type_kb(rdev_key::Return);
 
-#[allow(dead_code)]
-fn release_kb(key: rdev_key) {
-    use rdev::{simulate, EventType};
-
-    simulate(&EventType::KeyRelease(key)).unwrap();
-}
-
-#[allow(dead_code)]
-fn move_ms(x: f64, y: f64) {
-    use rdev::{simulate, EventType};
-
-    simulate(&EventType::MouseMove { x: x, y: y }).unwrap();
-}
-
-#[allow(dead_code)]
-fn elapsed_fn<F: Fn() -> ()>(cb: F) {
-    use std::time::Instant;
-    let start = Instant::now();
-    cb();
-    println!("耗時: {:?}", start.elapsed());
+                        return Some(self.change(State::Hello));
+                    }
+                }
+                _ => {}
+            }
+            None
+        }
+    }
+    struct StateHello;
+    impl StateAction for StateHello {
+        fn enter(&mut self) {
+            libs::type_kb(rdev_key::Return);
+            libs::past_text("Hello 測試狀態 !!!");
+            libs::exit();
+        }
+    }
 }
 
 #[allow(dead_code)]
 fn start_event01() {
-    #[allow(dead_code)]
-    trait State {
-        fn enter(&self);
-        fn out(&self);
-        fn key_press(&self, key: rdev_key);
-        fn key_release(&self, key: rdev_key);
-        fn mouse_move(&self, x: f64, y: f64);
-        fn mouse_button_press(&self, key: rdev_key);
-        fn mouse_button_release(&self, key: rdev_key);
-    }
-    #[allow(dead_code)]
-    struct WaitingState {}
-    impl State for WaitingState {
-        fn enter(&self) {}
-        fn out(&self) {}
-        #[allow(unused_variables)]
-        fn key_press(&self, key: rdev_key) {
-            match key {
-                rdev_key::ControlRight => {
-                    type_kb(rdev_key::Return);
-                    past_text("請輸入項目: 0: 測試");
-                },
-                rdev_key::Num1 => {
-                }
-                _ => {}
+    use rdev::{listen, Event};
+
+    let mut current_state = pc_ctrl::State::Waiting;
+    let callback = move |event: Event| {
+        match event.event_type {
+            rdev::EventType::KeyPress(key) => {
+                current_state = current_state.key_press(key);
             }
+            rdev::EventType::KeyRelease(key) => {
+                current_state = current_state.key_release(key);
+            }
+            rdev::EventType::MouseMove { x, y } => {
+                current_state = current_state.mouse_move(x, y);
+            }
+            rdev::EventType::ButtonPress(button) => {
+                current_state = current_state.mouse_button_press(button);
+            }
+            rdev::EventType::ButtonRelease(button) => {
+                current_state = current_state.mouse_button_release(button);
+            }
+            _ => {}
         }
-        #[allow(unused_variables)]
-        fn key_release(&self, key: rdev_key) {}
-        #[allow(unused_variables)]
-        fn mouse_move(&self, x: f64, y: f64) {}
-        #[allow(unused_variables)]
-        fn mouse_button_press(&self, key: rdev_key) {}
-        #[allow(unused_variables)]
-        fn mouse_button_release(&self, key: rdev_key) {}
+    };
+    if let Err(error) = listen(callback) {
+        println!("Error: {:?}", error);
     }
 }
 
