@@ -149,105 +149,48 @@ mod pc_ctrl {
     use crate::libs;
 
     #[derive(Copy, Clone)]
-    #[allow(dead_code)]
     pub enum State {
         Waiting,
         Hello,
     }
-    impl State {
-        fn action_mapping(&self) -> Box<dyn StateAction> {
-            match self {
-                State::Waiting => {
-                    return Box::new(StateWaiting{..Default::default()});
-                }
-                State::Hello => {
-                    return Box::new(StateHello{});
-                }
-            }
-        }
-
-        #[allow(unused_variables)]
-        pub fn key_press(&self, key: rdev_key) -> State {
-            // println!("KeyPress: {:?} ({})", key, libs::type_of(&key));
-            let mut action = self.action_mapping();
-            if let Some(new_state) = action.key_press(key) {
-                return new_state;
-            }
-            *self
-        }
-
-        #[allow(unused_variables)]
-        pub fn key_release(&self, key: rdev_key) -> State {
-            // println!("KeyRelease: {:?} ({})", key, libs::type_of(&key));
-            let mut action = self.action_mapping();
-            if let Some(new_state) = action.key_release(key) {
-                return new_state;
-            }
-            *self
-        }
-
-        #[allow(unused_variables)]
-        pub fn mouse_move(&self, x: f64, y: f64) -> State {
-            // println!("MouseMove: ({}, {})", x, y);
-            let mut action = self.action_mapping();
-            if let Some(new_state) = action.mouse_move(x, y) {
-                return new_state;
-            }
-            *self
-        }
-
-        #[allow(unused_variables)]
-        pub fn mouse_button_press(&self, button: rdev_btn) -> State {
-            // println!("ButtonPress: {:?} ({})", button, libs::type_of(&button));
-            let mut action = self.action_mapping();
-            if let Some(new_state) = action.mouse_button_press(button) {
-                return new_state;
-            }
-            *self
-        }
-
-        #[allow(unused_variables)]
-        pub fn mouse_button_release(&self, button: rdev_btn) -> State {
-            // println!("ButtonRelease: {:?} ({})", button, libs::type_of(&button));
-            let mut action = self.action_mapping();
-            if let Some(new_state) = action.mouse_button_release(button) {
-                return new_state;
-            }
-            *self
-        }
-    }
 
     #[allow(dead_code)]
-    trait StateAction {
-        fn enter(&mut self) {}
-        fn out(&mut self) {}
-        fn change(&mut self, new_state: State) -> State {
-            self.out();
-            let mut new_action = new_state.action_mapping();
-            new_action.enter();
-            new_state
+    trait Action {
+        #[allow(unused_variables)]
+        fn enter(&mut self, ctx: &mut Context) {}
+        #[allow(unused_variables)]
+        fn out(&mut self, ctx: &mut Context) {}
+
+        // 狀態變更, 固定行為: 當前 state.out() -> new_state.enter()
+        fn change(&mut self, new_state: State, ctx: &mut Context) {
+            self.out(ctx);
+            ctx.current_s = new_state;
+            ctx.action_mapping().enter(ctx);
         }
+
         #[allow(unused_variables)]
-        fn key_press(&mut self, key: rdev_key) -> Option<State> { None }
+        fn key_press(&mut self, key: rdev_key, ctx: &mut Context) {}
         #[allow(unused_variables)]
-        fn key_release(&mut self, key: rdev_key) -> Option<State> { None }
+        fn key_release(&mut self, key: rdev_key, ctx: &mut Context) {}
         #[allow(unused_variables)]
-        fn mouse_move(&mut self, x: f64, y: f64) -> Option<State> { None }
+        fn mouse_move(&mut self, x: f64, y: f64, ctx: &mut Context) {}
         #[allow(unused_variables)]
-        fn mouse_button_press(&mut self, button: rdev_btn) -> Option<State> { None }
+        fn mouse_button_press(&mut self, button: rdev_btn, ctx: &mut Context) {}
         #[allow(unused_variables)]
-        fn mouse_button_release(&mut self, button: rdev_btn) -> Option<State> { None }
+        fn mouse_button_release(&mut self, button: rdev_btn, ctx: &mut Context) {}
     }
-    struct StateWaiting { flag1: bool }
-    impl Default for StateWaiting {
-        fn default() -> StateWaiting {
-            StateWaiting {
+
+    //#[derive(Copy, Clone)]
+    struct ActionWaiting { flag1: bool }
+    impl Default for ActionWaiting {
+        fn default() -> ActionWaiting {
+            ActionWaiting {
                 flag1: false,
             }
         }
     }
-    impl StateAction for StateWaiting {
-        fn key_press(&mut self, key: rdev_key) -> Option<State> {
+    impl Action for ActionWaiting {
+        fn key_press(&mut self, key: rdev_key, ctx: &mut Context) {
             match key {
                 rdev_key::ControlRight => {
                     if !self.flag1 {
@@ -265,20 +208,68 @@ mod pc_ctrl {
                         libs::type_kb(rdev_key::Backspace);
                         libs::type_kb(rdev_key::Return);
 
-                        return Some(self.change(State::Hello));
+                        self.change(State::Hello, ctx);
                     }
                 }
                 _ => {}
             }
-            None
         }
     }
-    struct StateHello;
-    impl StateAction for StateHello {
-        fn enter(&mut self) {
+
+    #[derive(Copy, Clone)]
+    struct ActionHello;
+    impl Action for ActionHello {
+        #[allow(unused_variables)]
+        fn enter(&mut self, ctx: &mut Context) {
             libs::type_kb(rdev_key::Return);
             libs::past_text("Hello 測試狀態 !!!");
             libs::exit();
+        }
+    }
+
+    pub struct Context {
+        current_s: State,
+
+        action_waiting: ActionWaiting,
+        action_hello: ActionHello,
+    }
+    impl Default for Context {
+        fn default() -> Context {
+            // Action 僅在此初始化一次
+            Context {
+                current_s: State::Waiting,
+                action_waiting: ActionWaiting{..Default::default()},
+                action_hello: ActionHello{},
+            }
+        }
+    }
+    impl Context {
+        fn action_mapping(&self) -> Box<dyn Action> {
+            match self.current_s {
+                State::Waiting => {
+                    return Box::new(self.action_waiting);
+                }
+                State::Hello => {
+                    return Box::new(self.action_hello);
+                }
+            }
+        }
+
+        // --- event 轉發到 Action 中處理 ---
+        pub fn key_press(&mut self, key: rdev_key) {
+            self.action_mapping().key_press(key, self);
+        }
+        pub fn key_release(&mut self, key: rdev_key) {
+            self.action_mapping().key_release(key, self);
+        }
+        pub fn mouse_move(&mut self, x: f64, y: f64) {
+            self.action_mapping().mouse_move(x, y, self);
+        }
+        pub fn mouse_button_press(&mut self, button: rdev_btn) {
+            self.action_mapping().mouse_button_press(button, self);
+        }
+        pub fn mouse_button_release(&mut self, button: rdev_btn) {
+            self.action_mapping().mouse_button_press(button, self);
         }
     }
 }
@@ -287,23 +278,23 @@ mod pc_ctrl {
 fn start_event01() {
     use rdev::{listen, Event};
 
-    let mut current_state = pc_ctrl::State::Waiting;
+    let mut ctx: pc_ctrl::Context = Default::default();
     let callback = move |event: Event| {
         match event.event_type {
             rdev::EventType::KeyPress(key) => {
-                current_state = current_state.key_press(key);
+                ctx.key_press(key);
             }
             rdev::EventType::KeyRelease(key) => {
-                current_state = current_state.key_release(key);
+                ctx.key_release(key);
             }
             rdev::EventType::MouseMove { x, y } => {
-                current_state = current_state.mouse_move(x, y);
+                ctx.mouse_move(x, y);
             }
             rdev::EventType::ButtonPress(button) => {
-                current_state = current_state.mouse_button_press(button);
+                ctx.mouse_button_press(button);
             }
             rdev::EventType::ButtonRelease(button) => {
-                current_state = current_state.mouse_button_release(button);
+                ctx.mouse_button_release(button);
             }
             _ => {}
         }
