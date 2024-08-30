@@ -148,19 +148,20 @@ mod pc_ctrl {
     };
     use crate::libs;
 
-    //#[derive(Copy, Clone)]
+    // --- 狀態 ---
     pub enum State {
         Waiting,
         Hello,
     }
 
+    // --- 狀態介面 ---
     #[allow(dead_code)]
     trait Action {
-        #[allow(unused_variables)]
         fn enter(&mut self) {}
-        #[allow(unused_variables)]
         fn out(&mut self) {}
 
+        // --- 系統觸發介面 ---
+        // 若動作狀態需要進行狀態轉移時, 則在此回傳新的狀態, 由 Context 接手處理 狀態轉移
         #[allow(unused_variables)]
         fn key_press(&mut self, key: rdev_key) -> Option<State> { None }
         #[allow(unused_variables)]
@@ -173,7 +174,8 @@ mod pc_ctrl {
         fn mouse_button_release(&mut self, button: rdev_btn) -> Option<State> { None }
     }
 
-    //#[derive(Copy, Clone)]
+    // --- 狀態實作 ---
+    // 等待狀態
     struct ActionWaiting { flag1: bool }
     impl Default for ActionWaiting {
         fn default() -> ActionWaiting {
@@ -183,7 +185,11 @@ mod pc_ctrl {
         }
     }
     impl Action for ActionWaiting {
-        fn key_press(&mut self, key: rdev_key) -> Option<State> {
+        fn enter(&mut self) {
+            self.flag1 = false;
+        }
+
+        fn key_release(&mut self, key: rdev_key) -> Option<State> {
             match key {
                 rdev_key::ControlRight => {
                     if !self.flag1 {
@@ -195,10 +201,15 @@ mod pc_ctrl {
                 rdev_key::KeyH => {
                     if self.flag1 {
                         libs::type_kb(rdev_key::End);
+                        libs::sleep(100);
                         libs::press_kb(rdev_key::ShiftLeft);
+                        libs::sleep(100);
                         libs::type_kb(rdev_key::Home);
+                        libs::sleep(100);
                         libs::release_kb(rdev_key::ShiftLeft);
+                        libs::sleep(100);
                         libs::type_kb(rdev_key::Backspace);
+                        libs::sleep(100);
                         libs::type_kb(rdev_key::Return);
 
                         return Some(State::Hello);
@@ -210,6 +221,7 @@ mod pc_ctrl {
         }
     }
 
+    // 測試狀態
     #[derive(Copy, Clone)]
     struct ActionHello;
     impl Action for ActionHello {
@@ -221,6 +233,7 @@ mod pc_ctrl {
         }
     }
 
+    // --- 事件觸發介面, 保留各種狀態的實體 ---
     pub struct Context {
         current_s: State,
 
