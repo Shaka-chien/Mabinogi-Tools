@@ -200,17 +200,28 @@ mod pc_ctrl {
                 }
                 rdev_key::KeyH => {
                     if self.flag1 {
-                        libs::type_kb(rdev_key::End);
-                        libs::sleep(100);
-                        libs::press_kb(rdev_key::ShiftLeft);
-                        libs::sleep(100);
-                        libs::type_kb(rdev_key::Home);
-                        libs::sleep(100);
-                        libs::release_kb(rdev_key::ShiftLeft);
-                        libs::sleep(100);
+                        // libs::type_kb(rdev_key::End);
+                        // libs::sleep(100);
+                        // libs::press_kb(rdev_key::ShiftLeft);
+                        // libs::sleep(100);
+                        // libs::type_kb(rdev_key::Home);
+                        // libs::sleep(100);
+                        // libs::release_kb(rdev_key::ShiftLeft);
+                        // libs::sleep(100);
+                        // libs::type_kb(rdev_key::Backspace);
+                        // libs::sleep(100);
+                        // libs::type_kb(rdev_key::Return);
+
+                        libs::press_kb(rdev_key::ControlLeft);
+                        libs::sleep(50);
+                        libs::type_kb(rdev_key::KeyA);
+                        libs::sleep(50);
+                        libs::release_kb(rdev_key::ControlLeft);
+                        libs::sleep(50);
                         libs::type_kb(rdev_key::Backspace);
-                        libs::sleep(100);
+                        libs::sleep(50);
                         libs::type_kb(rdev_key::Return);
+                        libs::sleep(50);
 
                         return Some(State::Hello);
                     }
@@ -228,6 +239,7 @@ mod pc_ctrl {
         #[allow(unused_variables)]
         fn enter(&mut self) {
             libs::type_kb(rdev_key::Return);
+            libs::sleep(50);
             libs::past_text("Hello 測試狀態 !!!");
             libs::exit();
         }
@@ -326,6 +338,38 @@ fn start_event01() {
     }
 }
 
+#[allow(dead_code)]
+fn testing() {
+    use rdev::{
+        Key as rdev_key,    // https://docs.rs/rdev/latest/rdev/enum.Key.html
+        Button as rdev_btn, // https://docs.rs/rdev/latest/rdev/enum.Button.html
+    };
+
+    //libs::move_ms(477.0, 194.0);
+    //libs::left_press_ms();
+    //libs::move_ms(367.0, 194.0);
+    //libs::left_release_ms();
+
+    libs::sleep(3000);
+    println!("開始(ctrl)");
+
+    // libs::type_kb(rdev_key::End);
+    // libs::sleep(500);
+    // libs::press_kb(rdev_key::ShiftLeft);
+    // libs::sleep(500);
+    // libs::type_kb(rdev_key::Home);
+    // libs::sleep(500);
+    // libs::release_kb(rdev_key::ShiftLeft);
+    libs::press_kb(rdev_key::ControlLeft);
+    libs::sleep(100);
+    libs::type_kb(rdev_key::KeyA);
+    libs::sleep(100);
+    libs::release_kb(rdev_key::ControlLeft);
+    libs::sleep(500);
+    libs::type_kb(rdev_key::Backspace);
+}
+
 fn main() {
     start_event01();
+    //xxx();
 }
