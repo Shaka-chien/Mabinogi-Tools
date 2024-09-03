@@ -200,7 +200,7 @@ mod libs {
     }
 
     // --- keyboard, mouse public method ---
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub enum ButtonState {
         Press, Release
     }
@@ -923,7 +923,7 @@ mod pc_ctrl {
                                     if !self.flag1 {
                                         self.flag1 = true;
                                         libs::KeyCode::Return.click();
-                                        libs::past_text("請選擇 - h:hello");
+                                        libs::past_text("請選擇 - h:hello, q:退出 :: ");
                                     }
                                 }
                                 libs::KeyCode::KeyH => {
@@ -943,6 +943,21 @@ mod pc_ctrl {
                                         return Some(State::Hello);
                                     }
                                 }
+                                libs::KeyCode::KeyQ => {
+                                    libs::KeyCode::End.click();
+                                    libs::sleep(100);
+                                    libs::KeyCode::ShiftLeft.press();
+                                    libs::sleep(100);
+                                    libs::KeyCode::Home.click();
+                                    libs::sleep(100);
+                                    libs::KeyCode::ShiftLeft.release();
+                                    libs::sleep(100);
+                                    libs::KeyCode::Backspace.click();
+                                    libs::sleep(100);
+                                    libs::past_text("程式已退出");
+
+                                    libs::exit();
+                                }
                                 _ => {}
                             }
                         }
@@ -956,7 +971,6 @@ mod pc_ctrl {
     }
 
     // 測試狀態
-    #[derive(Copy, Clone)]
     struct ActionHello;
     impl Action for ActionHello {
         #[allow(unused_variables)]
