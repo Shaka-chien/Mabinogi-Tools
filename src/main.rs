@@ -1,19 +1,19 @@
 mod libs {
     extern crate winapi;
     use winapi::um::winuser::{
-        INPUT, INPUT_KEYBOARD, INPUT_MOUSE, KEYBDINPUT, MOUSEINPUT, SendInput, 
-        KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, MOUSEEVENTF_MOVE, MOUSEEVENTF_ABSOLUTE, 
+        INPUT, INPUT_KEYBOARD, INPUT_MOUSE, SendInput, 
+        KEYEVENTF_KEYUP, MOUSEEVENTF_MOVE, MOUSEEVENTF_ABSOLUTE, 
         MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_WHEEL,
         GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN,
         SetWindowsHookExW, CallNextHookEx, UnhookWindowsHookEx, GetMessageW, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, KBDLLHOOKSTRUCT,
         WH_MOUSE_LL, WM_MOUSEMOVE, WM_LBUTTONDOWN, WM_RBUTTONDOWN, WM_LBUTTONUP,
         WM_RBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEWHEEL, MSLLHOOKSTRUCT,
-    };
-    use winapi::shared::minwindef::{DWORD, UINT, LRESULT, WPARAM, LPARAM};
+    }; // KEYBDINPUT, MOUSEINPUT, KEYEVENTF_SCANCODE
+    use winapi::shared::minwindef::{DWORD, LRESULT, WPARAM, LPARAM}; // UINT
     use std::mem::size_of;
 
     use std::ptr::null_mut;
-    use std::ffi::c_void;
+    //use std::ffi::c_void;
     use winapi::shared::windef::{HHOOK, POINT};
     use winapi::um::libloaderapi::GetModuleHandleW;
 
@@ -598,7 +598,7 @@ mod libs {
     static mut GLOBAL_CALLBACK: Option<Box<dyn FnMut(SystemInputEvent)>> = None;
     static mut HOOK: HHOOK = null_mut();
 
-    extern "system" fn RawCallback(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
+    extern "system" fn raw_callback(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
         if code >= 0 {
             match w_param as DWORD {
                 // --- keyboard event ---
@@ -609,6 +609,7 @@ mod libs {
                     match key_code {
                         KeyCode::UnicodePrefix => {}
                         _ => {
+                            #[allow(static_mut_refs)]
                             unsafe {
                                 if let Some(cb) = &mut GLOBAL_CALLBACK {
                                     cb(SystemInputEvent::KeyCode(key_code, ButtonState::Press));
@@ -626,6 +627,7 @@ mod libs {
                     match key_code {
                         KeyCode::UnicodePrefix => {}
                         _ => {
+                            #[allow(static_mut_refs)]
                             unsafe {
                                 if let Some(cb) = &mut GLOBAL_CALLBACK {
                                     cb(SystemInputEvent::KeyCode(key_code, ButtonState::Release));
@@ -642,6 +644,7 @@ mod libs {
                     let POINT { x, y } = mouse_info.pt;
                     // println!("Mouse moved to: ({}, {})", x, y);
                     let move_event = MouseAction::Move(x, y);
+                    #[allow(static_mut_refs)]
                     unsafe {
                         if let Some(cb) = &mut GLOBAL_CALLBACK {
                             cb(SystemInputEvent::MouseAction(move_event));
@@ -654,6 +657,7 @@ mod libs {
                     let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                     //println!("Left button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                     let lbtn_press = MouseButton::LBtn(mouse_info.pt.x, mouse_info.pt.y);
+                    #[allow(static_mut_refs)]
                     unsafe {
                         if let Some(cb) = &mut GLOBAL_CALLBACK {
                             cb(SystemInputEvent::MouseButton(lbtn_press, ButtonState::Press));
@@ -666,6 +670,7 @@ mod libs {
                     let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                     //println!("Left button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                     let lbtn_release = MouseButton::LBtn(mouse_info.pt.x, mouse_info.pt.y);
+                    #[allow(static_mut_refs)]
                     unsafe {
                         if let Some(cb) = &mut GLOBAL_CALLBACK {
                             cb(SystemInputEvent::MouseButton(lbtn_release, ButtonState::Release));
@@ -678,6 +683,7 @@ mod libs {
                     let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                     //println!("Right button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                     let rbtn_press = MouseButton::RBtn(mouse_info.pt.x, mouse_info.pt.y);
+                    #[allow(static_mut_refs)]
                     unsafe {
                         if let Some(cb) = &mut GLOBAL_CALLBACK {
                             cb(SystemInputEvent::MouseButton(rbtn_press, ButtonState::Press));
@@ -690,6 +696,7 @@ mod libs {
                     let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                     //println!("Right button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                     let rbtn_release = MouseButton::RBtn(mouse_info.pt.x, mouse_info.pt.y);
+                    #[allow(static_mut_refs)]
                     unsafe {
                         if let Some(cb) = &mut GLOBAL_CALLBACK {
                             cb(SystemInputEvent::MouseButton(rbtn_release, ButtonState::Release));
@@ -702,6 +709,7 @@ mod libs {
                     let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                     //println!("Middle button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                     let mbtn_press = MouseButton::MBtn(mouse_info.pt.x, mouse_info.pt.y);
+                    #[allow(static_mut_refs)]
                     unsafe {
                         if let Some(cb) = &mut GLOBAL_CALLBACK {
                             cb(SystemInputEvent::MouseButton(mbtn_press, ButtonState::Press));
@@ -714,6 +722,7 @@ mod libs {
                     let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                     //println!("Middle button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                     let mbtn_release = MouseButton::MBtn(mouse_info.pt.x, mouse_info.pt.y);
+                    #[allow(static_mut_refs)]
                     unsafe {
                         if let Some(cb) = &mut GLOBAL_CALLBACK {
                             cb(SystemInputEvent::MouseButton(mbtn_release, ButtonState::Release));
@@ -731,6 +740,7 @@ mod libs {
                     //    println!("Mouse wheel scrolled down at: ({}, {}), delta: {}", mouse_info.pt.x, mouse_info.pt.y, delta);
                     //}
                     let whell = MouseAction::Whell(mouse_info.pt.x, mouse_info.pt.y, delta);
+                    #[allow(static_mut_refs)]
                     unsafe {
                         if let Some(cb) = &mut GLOBAL_CALLBACK {
                             cb(SystemInputEvent::MouseAction(whell));
@@ -745,6 +755,7 @@ mod libs {
         unsafe { CallNextHookEx(HOOK, code, w_param, l_param) }
     }
 
+    #[allow(dead_code)]
     #[derive(Debug)]
     pub enum SystemInputEvent {
         KeyCode(KeyCode, ButtonState),
@@ -754,13 +765,11 @@ mod libs {
     }
     impl SystemInputEvent {
         pub fn listen_keyboard_event() {
-            use std::sync::{LazyLock, Mutex};
-
             unsafe {
                 let h_instance = GetModuleHandleW(null_mut());
                 HOOK = SetWindowsHookExW(
                     WH_KEYBOARD_LL,
-                    Some(RawCallback),
+                    Some(raw_callback),
                     h_instance,
                     0,
                 );
@@ -780,7 +789,7 @@ mod libs {
                 let h_instance = GetModuleHandleW(null_mut());
                 HOOK = SetWindowsHookExW(
                     WH_MOUSE_LL,
-                    Some(RawCallback),
+                    Some(raw_callback),
                     h_instance,
                     0,
                 );
@@ -853,10 +862,10 @@ mod libs {
 
     // 計算耗時
     #[allow(dead_code)]
-    pub fn elapsed_fn<F: Fn() -> ()>(cb: F) {
+    pub fn elapsed_fn<F: Fn()>(cb: F) {
         use std::time::Instant;
         let start = Instant::now();
-        //cb();
+        cb();
         println!("耗時: {:?}", start.elapsed());
     }
 
@@ -940,9 +949,7 @@ mod pc_ctrl {
                         libs::ButtonState::Press => {}
                     }
                 }
-                libs::SystemInputEvent::MouseAction(mouse) => {}
-                libs::SystemInputEvent::MouseButton(mouse, btn_state) => {}
-                libs::SystemInputEvent::Delay => {}
+                _ => {}
             }
             None
         }
