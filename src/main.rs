@@ -8,7 +8,7 @@ mod libs {
         SetWindowsHookExW, CallNextHookEx, UnhookWindowsHookEx, GetMessageW, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, KBDLLHOOKSTRUCT,
         WH_MOUSE_LL, WM_MOUSEMOVE, WM_LBUTTONDOWN, WM_RBUTTONDOWN, WM_LBUTTONUP,
         WM_RBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEWHEEL, MSLLHOOKSTRUCT,
-    }; // KEYBDINPUT, MOUSEINPUT, KEYEVENTF_SCANCODE
+    }; // KEYBDINPUT, MOUSEINPUT, KEYEVENTF_SCANCODE, keybd_event,
     use winapi::shared::minwindef::{DWORD, LRESULT, WPARAM, LPARAM}; // UINT
     use std::mem::size_of;
 
@@ -18,32 +18,69 @@ mod libs {
     use winapi::um::libloaderapi::GetModuleHandleW;
 
     // --- keyboard, mouse simulater core ---
-    fn simulate_key_press(vk: u16) {
+    fn check_ext(key_code: &KeyCode) -> u32 {
+        match key_code {
+            KeyCode::ControlRight   => { 1 }
+            KeyCode::Insert         => { 1 }
+            KeyCode::Delete         => { 1 }
+            KeyCode::Home           => { 1 }
+            KeyCode::End            => { 1 }
+            KeyCode::PageUp         => { 1 }
+            KeyCode::PageDown       => { 1 }
+            KeyCode::UpArrow        => { 1 }
+            KeyCode::DownArrow      => { 1 }
+            KeyCode::LeftArrow      => { 1 }
+            KeyCode::RightArrow     => { 1 }
+            KeyCode::NumLock        => { 1 }
+            KeyCode::KpMinus        => { 1 }
+            KeyCode::KpPlus         => { 1 }
+            KeyCode::KpMultiply     => { 1 }
+            KeyCode::KpDivide       => { 1 }
+            KeyCode::Kp0            => { 1 }
+            KeyCode::Kp1            => { 1 }
+            KeyCode::Kp2            => { 1 }
+            KeyCode::Kp3            => { 1 }
+            KeyCode::Kp4            => { 1 }
+            KeyCode::Kp5            => { 1 }
+            KeyCode::Kp6            => { 1 }
+            KeyCode::Kp7            => { 1 }
+            KeyCode::Kp8            => { 1 }
+            KeyCode::Kp9            => { 1 }
+            KeyCode::KpDelete       => { 1 }
+            _ => { 0 }
+        }
+    }
+
+    fn simulate_key_press(vk: u16, key_code: &KeyCode) {
         let mut input = INPUT {
             type_: INPUT_KEYBOARD,
             u: unsafe { std::mem::zeroed() },
         };
+        let ext = check_ext(&key_code);
         unsafe {
             let ki = input.u.ki_mut();
             ki.wVk = vk;
             ki.dwFlags = 0; // 按下鍵
-            ki.dwFlags = ki.dwFlags | 1; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
+            ki.dwFlags = ki.dwFlags | ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
         }
         unsafe { SendInput(1, &mut input, size_of::<INPUT>() as i32) };
+        // unsafe { let ki = input.u.ki(); keybd_event(ki.wVk as u8, 0, ki.dwFlags, 0) };
     }
 
-    fn simulate_key_release(vk: u16) {
+    fn simulate_key_release(vk: u16, key_code: &KeyCode) {
         let mut input = INPUT {
             type_: INPUT_KEYBOARD,
             u: unsafe { std::mem::zeroed() },
         };
+        let ext = check_ext(&key_code);
         unsafe {
             let ki = input.u.ki_mut();
             ki.wVk = vk;
             ki.dwFlags = KEYEVENTF_KEYUP; // 放開鍵
-            ki.dwFlags = ki.dwFlags | 1; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
+            ki.dwFlags = ki.dwFlags | ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
         }
         unsafe { SendInput(1, &mut input, size_of::<INPUT>() as i32) };
+        // unsafe { let ki = input.u.ki(); keybd_event(ki.wVk as u8, 0, ki.dwFlags, 0) };
     }
 
     fn convert_to_absolute(x: i32, y: i32) -> (i32, i32) {
@@ -532,18 +569,18 @@ mod libs {
 
         pub fn press(&self) {
             let vk = self.to_int();
-            simulate_key_press((vk as u32).try_into().unwrap());
+            simulate_key_press((vk as u32).try_into().unwrap(), &self);
         }
 
         pub fn release(&self) {
             let vk = self.to_int();
-            simulate_key_release((vk as u32).try_into().unwrap());
+            simulate_key_release((vk as u32).try_into().unwrap(), &self);
         }
 
         pub fn click(&self) {
             let vk = self.to_int();
-            simulate_key_press((vk as u32).try_into().unwrap());
-            simulate_key_release((vk as u32).try_into().unwrap());
+            simulate_key_press((vk as u32).try_into().unwrap(), &self);
+            simulate_key_release((vk as u32).try_into().unwrap(), &self);
         }
     }
 
@@ -604,8 +641,9 @@ mod libs {
                 // --- keyboard event ---
                 WM_KEYDOWN => {
                     let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
-                    //println!("Key pressed: {}", kb_struct.vkCode);
                     let key_code = KeyCode::from_int(kb_struct.vkCode);
+                    //println!("(1)Key pressed :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
+                    //println!("(2)Key pressed :: code: {:?}, flags: {}, scan_code: {}, time: {}, extra_info: {}", key_code, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
                     match key_code {
                         KeyCode::UnicodePrefix => {}
                         _ => {
@@ -622,8 +660,9 @@ mod libs {
                 }
                 WM_KEYUP => {
                     let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
-                    //println!("Key released: {}", kb_struct.vkCode);
                     let key_code = KeyCode::from_int(kb_struct.vkCode);
+                    //println!("(1)Key released :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
+                    //println!("(2)Key released :: code: {:?}, flags: {}, scan_code: {}, time: {}, extra_info: {}", key_code, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
                     match key_code {
                         KeyCode::UnicodePrefix => {}
                         _ => {
