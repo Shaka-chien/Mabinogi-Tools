@@ -66,7 +66,104 @@ mod libs {
 
     fn scan_code(key_code: &KeyCode) -> u16 {
         match key_code {
-            KeyCode::Return   => { 0x1c }
+            KeyCode::Alt            => { 56 }
+            KeyCode::AltGr          => { 56 }
+            KeyCode::BackQuote      => { 41 }
+            KeyCode::BackSlash      => { 43 }
+            KeyCode::Backspace      => { 14 }
+            KeyCode::CapsLock       => { 58 }
+            KeyCode::Comma          => { 51 }
+            KeyCode::ControlLeft    => { 29 }
+            KeyCode::ControlRight   => { 29 }
+            KeyCode::Delete         => { 83 }
+            KeyCode::Dot            => { 52 }
+            KeyCode::DownArrow      => { 80 }
+            KeyCode::End            => { 79 }
+            KeyCode::Equal          => { 13 }
+            KeyCode::Escape         => { 1 }
+            KeyCode::F1             => { 59 }
+            KeyCode::F10            => { 68 }
+            KeyCode::F11            => { 87 }
+            KeyCode::F12            => { 88 }
+            KeyCode::F2             => { 60 }
+            KeyCode::F3             => { 61 }
+            KeyCode::F4             => { 62 }
+            KeyCode::F5             => { 63 }
+            KeyCode::F6             => { 64 }
+            KeyCode::F7             => { 65 }
+            KeyCode::F8             => { 66 }
+            KeyCode::F9             => { 67 }
+            KeyCode::Home           => { 71 }
+            KeyCode::Insert         => { 82 }
+            KeyCode::KeyA           => { 30 }
+            KeyCode::KeyB           => { 48 }
+            KeyCode::KeyC           => { 46 }
+            KeyCode::KeyD           => { 32 }
+            KeyCode::KeyE           => { 18 }
+            KeyCode::KeyF           => { 33 }
+            KeyCode::KeyG           => { 34 }
+            KeyCode::KeyH           => { 35 }
+            KeyCode::KeyI           => { 23 }
+            KeyCode::KeyJ           => { 36 }
+            KeyCode::KeyK           => { 37 }
+            KeyCode::KeyL           => { 38 }
+            KeyCode::KeyM           => { 50 }
+            KeyCode::KeyN           => { 49 }
+            KeyCode::KeyO           => { 24 }
+            KeyCode::KeyP           => { 25 }
+            KeyCode::KeyQ           => { 16 }
+            KeyCode::KeyR           => { 19 }
+            KeyCode::KeyS           => { 31 }
+            KeyCode::KeyT           => { 20 }
+            KeyCode::KeyU           => { 22 }
+            KeyCode::KeyV           => { 47 }
+            KeyCode::KeyW           => { 17 }
+            KeyCode::KeyX           => { 45 }
+            KeyCode::KeyY           => { 21 }
+            KeyCode::KeyZ           => { 44 }
+            KeyCode::Kp0            => { 82 }
+            KeyCode::Kp1            => { 79 }
+            KeyCode::Kp2            => { 80 }
+            KeyCode::Kp3            => { 81 }
+            KeyCode::Kp4            => { 75 }
+            KeyCode::Kp5            => { 76 }
+            KeyCode::Kp6            => { 77 }
+            KeyCode::Kp7            => { 71 }
+            KeyCode::Kp8            => { 72 }
+            KeyCode::Kp9            => { 73 }
+            KeyCode::KpDelete       => { 83 }
+            KeyCode::KpDivide       => { 53 }
+            KeyCode::KpMinus        => { 74 }
+            KeyCode::KpMultiply     => { 55 }
+            KeyCode::KpPlus         => { 78 }
+            KeyCode::LeftArrow      => { 75 }
+            KeyCode::LeftBracket    => { 26 }
+            KeyCode::MetaLeft       => { 91 }
+            KeyCode::Minus          => { 12 }
+            KeyCode::Num0           => { 11 }
+            KeyCode::Num1           => { 2 }
+            KeyCode::Num2           => { 3 }
+            KeyCode::Num3           => { 4 }
+            KeyCode::Num4           => { 5 }
+            KeyCode::Num5           => { 6 }
+            KeyCode::Num6           => { 7 }
+            KeyCode::Num7           => { 8 }
+            KeyCode::Num8           => { 9 }
+            KeyCode::Num9           => { 10 }
+            KeyCode::NumLock        => { 69 }
+            KeyCode::PageDown       => { 81 }
+            KeyCode::PageUp         => { 73 }
+            KeyCode::Quote          => { 40 }
+            KeyCode::Return         => { 28 }
+            KeyCode::RightArrow     => { 77 }
+            KeyCode::RightBracket   => { 27 }
+            KeyCode::SemiColon      => { 39 }
+            KeyCode::ShiftLeft      => { 42 }
+            KeyCode::ShiftRight     => { 54 }
+            KeyCode::Slash          => { 53 }
+            KeyCode::Space          => { 0 }
+            KeyCode::Tab            => { 15 }
+            KeyCode::UpArrow        => { 72 }
             _ => { 0 }
         }
     }
@@ -686,7 +783,7 @@ mod libs {
                     let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
                     let key_code = KeyCode::from_int(kb_struct.vkCode);
                     //println!("(1)Key pressed :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
-                    //println!("(2)Key pressed :: code: {:?}, flags: {}, scan_code: {}, time: {}, extra_info: {}", key_code, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
+                    //println!("(2)Key pressed :: code: {:?}({}), flags: {}, scan_code: {}, time: {}, extra_info: {}", key_code, kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
                     match key_code {
                         KeyCode::UnicodePrefix => {}
                         _ => {
@@ -705,7 +802,7 @@ mod libs {
                     let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
                     let key_code = KeyCode::from_int(kb_struct.vkCode);
                     //println!("(1)Key released :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
-                    //println!("(2)Key released :: code: {:?}, flags: {}, scan_code: {}, time: {}, extra_info: {}", key_code, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
+                    //println!("(2)Key released :: code: {:?}({}), flags: {}, scan_code: {}, time: {}, extra_info: {}", key_code, kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
                     match key_code {
                         KeyCode::UnicodePrefix => {}
                         _ => {
