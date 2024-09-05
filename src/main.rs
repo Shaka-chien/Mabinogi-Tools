@@ -8,6 +8,7 @@ mod libs {
         SetWindowsHookExW, CallNextHookEx, UnhookWindowsHookEx, GetMessageW, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, KBDLLHOOKSTRUCT,
         WH_MOUSE_LL, WM_MOUSEMOVE, WM_LBUTTONDOWN, WM_RBUTTONDOWN, WM_LBUTTONUP,
         WM_RBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEWHEEL, MSLLHOOKSTRUCT,
+        GetCursorPos,
     }; // KEYBDINPUT, MOUSEINPUT, KEYEVENTF_SCANCODE, keybd_event,
     use winapi::shared::minwindef::{DWORD, LRESULT, WPARAM, LPARAM}; // UINT
     use std::mem::size_of;
@@ -16,6 +17,18 @@ mod libs {
     //use std::ffi::c_void;
     use winapi::shared::windef::{HHOOK, POINT};
     use winapi::um::libloaderapi::GetModuleHandleW;
+
+    // --- get system info ---
+    fn get_mouse_position() -> (i32, i32) {
+        unsafe {
+            let mut point: POINT = POINT { x: 0, y: 0 };
+            if GetCursorPos(&mut point) != 0 {
+                (point.x, point.y)
+            } else {
+                (-1, -1)
+            }
+        }
+    }
 
     // --- keyboard, mouse simulater core ---
     fn check_ext(key_code: &KeyCode) -> u32 {
@@ -596,6 +609,9 @@ mod libs {
                 MouseAction::Whell(x, y, delta)   => { simulate_mouse_whell(*x, *y, *delta) }
             }
         }
+        pub fn get_mouse_position() -> (i32, i32) {
+            get_mouse_position()
+        }
     }
     #[derive(Debug)]
     pub enum MouseButton {
@@ -626,6 +642,22 @@ mod libs {
                     simulate_mouse_rbtn_release(*x, *y)
                 }
                 MouseButton::MBtn(x, y)     => {
+                    simulate_mouse_mbtn_release(*x, *y)
+                }
+            }
+        }
+        pub fn click(&self) {
+            match self {
+                MouseButton::LBtn(x, y)     => {
+                    simulate_mouse_lbtn_press(*x, *y);
+                    simulate_mouse_lbtn_release(*x, *y)
+                }
+                MouseButton::RBtn(x, y)     => {
+                    simulate_mouse_rbtn_press(*x, *y);
+                    simulate_mouse_rbtn_release(*x, *y)
+                }
+                MouseButton::MBtn(x, y)     => {
+                    simulate_mouse_mbtn_press(*x, *y);
                     simulate_mouse_mbtn_release(*x, *y)
                 }
             }
@@ -961,8 +993,11 @@ mod pc_ctrl {
                                 libs::KeyCode::ControlRight => {
                                     if !self.flag1 {
                                         self.flag1 = true;
-                                        libs::KeyCode::Return.click();
-                                        libs::past_text("請選擇 - h:hello, q:退出 :: ");
+                                        libs::MouseButton::LBtn(925, 470).click();
+                                        libs::sleep(300);
+                                        //libs::KeyCode::Return.click();
+                                        //libs::sleep(300);
+                                        libs::past_text("請選擇 - h:hello, m: 取得鼠位置, q:退出 :: ");
                                     }
                                 }
                                 libs::KeyCode::KeyH => {
@@ -977,10 +1012,26 @@ mod pc_ctrl {
                                         libs::sleep(100);
                                         libs::KeyCode::Backspace.click();
                                         libs::sleep(100);
-                                        libs::KeyCode::Return.click();
+                                        //libs::KeyCode::Return.click();
 
                                         return Some(State::Hello);
                                     }
+                                }
+                                libs::KeyCode::KeyM => {
+                                    libs::KeyCode::End.click();
+                                    libs::sleep(100);
+                                    libs::KeyCode::ShiftLeft.press();
+                                    libs::sleep(100);
+                                    libs::KeyCode::Home.click();
+                                    libs::sleep(100);
+                                    libs::KeyCode::ShiftLeft.release();
+                                    libs::sleep(100);
+                                    libs::KeyCode::Backspace.click();
+                                    libs::sleep(100);
+                                    let (x, y) = libs::MouseAction::get_mouse_position();
+                                    libs::past_text(format!("當前滑鼠位置為 x: {}, y: {}", x, y));
+
+                                    libs::exit();
                                 }
                                 libs::KeyCode::KeyQ => {
                                     libs::KeyCode::End.click();
@@ -1014,7 +1065,7 @@ mod pc_ctrl {
     impl Action for ActionHello {
         #[allow(unused_variables)]
         fn enter(&mut self) {
-            libs::KeyCode::Return.click();
+            //libs::KeyCode::Return.click();
             libs::sleep(50);
             libs::past_text("Hello 測試狀態 !!!");
             libs::exit();
