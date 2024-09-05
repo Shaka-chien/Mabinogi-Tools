@@ -64,15 +64,24 @@ mod libs {
         }
     }
 
+    fn scan_code(key_code: &KeyCode) -> u16 {
+        match key_code {
+            KeyCode::Return   => { 0x1c }
+            _ => { 0 }
+        }
+    }
+
     fn simulate_key_press(vk: u16, key_code: &KeyCode) {
         let mut input = INPUT {
             type_: INPUT_KEYBOARD,
             u: unsafe { std::mem::zeroed() },
         };
         let ext = check_ext(&key_code);
+        let sc = scan_code(&key_code);
         unsafe {
             let ki = input.u.ki_mut();
             ki.wVk = vk;
+            ki.wScan = sc;
             ki.dwFlags = 0; // 按下鍵
             ki.dwFlags = ki.dwFlags | ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
         }
@@ -86,9 +95,11 @@ mod libs {
             u: unsafe { std::mem::zeroed() },
         };
         let ext = check_ext(&key_code);
+        let sc = scan_code(&key_code);
         unsafe {
             let ki = input.u.ki_mut();
             ki.wVk = vk;
+            ki.wScan = sc;
             ki.dwFlags = KEYEVENTF_KEYUP; // 放開鍵
             ki.dwFlags = ki.dwFlags | ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
         }
@@ -992,11 +1003,18 @@ mod pc_ctrl {
                             match key_code {
                                 libs::KeyCode::ControlRight => {
                                     if !self.flag1 {
+                                        // --- test code ---
+                                        // libs::sleep(50);
+                                        // libs::KeyCode::Return.click();
+                                        // libs::sleep(50);
+                                        // println!("test1 ...");
+                                        // libs::exit();
+
                                         self.flag1 = true;
                                         libs::MouseButton::LBtn(925, 470).click();
-                                        libs::sleep(300);
-                                        //libs::KeyCode::Return.click();
-                                        //libs::sleep(300);
+                                        libs::sleep(50);
+                                        libs::KeyCode::Return.click();
+                                        libs::sleep(50);
                                         libs::past_text("請選擇 - h:hello, m: 取得鼠位置, q:退出 :: ");
                                     }
                                 }
@@ -1018,35 +1036,39 @@ mod pc_ctrl {
                                     }
                                 }
                                 libs::KeyCode::KeyM => {
-                                    libs::KeyCode::End.click();
-                                    libs::sleep(100);
-                                    libs::KeyCode::ShiftLeft.press();
-                                    libs::sleep(100);
-                                    libs::KeyCode::Home.click();
-                                    libs::sleep(100);
-                                    libs::KeyCode::ShiftLeft.release();
-                                    libs::sleep(100);
-                                    libs::KeyCode::Backspace.click();
-                                    libs::sleep(100);
-                                    let (x, y) = libs::MouseAction::get_mouse_position();
-                                    libs::past_text(format!("當前滑鼠位置為 x: {}, y: {}", x, y));
+                                    if self.flag1 {
+                                        libs::KeyCode::End.click();
+                                        libs::sleep(100);
+                                        libs::KeyCode::ShiftLeft.press();
+                                        libs::sleep(100);
+                                        libs::KeyCode::Home.click();
+                                        libs::sleep(100);
+                                        libs::KeyCode::ShiftLeft.release();
+                                        libs::sleep(100);
+                                        libs::KeyCode::Backspace.click();
+                                        libs::sleep(100);
+                                        let (x, y) = libs::MouseAction::get_mouse_position();
+                                        libs::past_text(format!("當前滑鼠位置為 x: {}, y: {}", x, y));
 
-                                    libs::exit();
+                                        libs::exit();
+                                    }
                                 }
                                 libs::KeyCode::KeyQ => {
-                                    libs::KeyCode::End.click();
-                                    libs::sleep(100);
-                                    libs::KeyCode::ShiftLeft.press();
-                                    libs::sleep(100);
-                                    libs::KeyCode::Home.click();
-                                    libs::sleep(100);
-                                    libs::KeyCode::ShiftLeft.release();
-                                    libs::sleep(100);
-                                    libs::KeyCode::Backspace.click();
-                                    libs::sleep(100);
-                                    libs::past_text("程式已退出");
+                                    if self.flag1 {
+                                        libs::KeyCode::End.click();
+                                        libs::sleep(100);
+                                        libs::KeyCode::ShiftLeft.press();
+                                        libs::sleep(100);
+                                        libs::KeyCode::Home.click();
+                                        libs::sleep(100);
+                                        libs::KeyCode::ShiftLeft.release();
+                                        libs::sleep(100);
+                                        libs::KeyCode::Backspace.click();
+                                        libs::sleep(100);
+                                        libs::past_text("程式已退出");
 
-                                    libs::exit();
+                                        libs::exit();
+                                    }
                                 }
                                 _ => {}
                             }
