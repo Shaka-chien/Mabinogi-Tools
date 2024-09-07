@@ -31,153 +31,17 @@ mod libs {
     }
 
     // --- keyboard, mouse simulater core ---
-    fn check_ext(key_code: &KeyCode) -> u32 {
-        match key_code {
-            KeyCode::ControlRight   => { 1 }
-            KeyCode::Insert         => { 1 }
-            KeyCode::Delete         => { 1 }
-            KeyCode::Home           => { 1 }
-            KeyCode::End            => { 1 }
-            KeyCode::PageUp         => { 1 }
-            KeyCode::PageDown       => { 1 }
-            KeyCode::UpArrow        => { 1 }
-            KeyCode::DownArrow      => { 1 }
-            KeyCode::LeftArrow      => { 1 }
-            KeyCode::RightArrow     => { 1 }
-            KeyCode::NumLock        => { 1 }
-            KeyCode::KpMinus        => { 1 }
-            KeyCode::KpPlus         => { 1 }
-            KeyCode::KpMultiply     => { 1 }
-            KeyCode::KpDivide       => { 1 }
-            KeyCode::Kp0            => { 1 }
-            KeyCode::Kp1            => { 1 }
-            KeyCode::Kp2            => { 1 }
-            KeyCode::Kp3            => { 1 }
-            KeyCode::Kp4            => { 1 }
-            KeyCode::Kp5            => { 1 }
-            KeyCode::Kp6            => { 1 }
-            KeyCode::Kp7            => { 1 }
-            KeyCode::Kp8            => { 1 }
-            KeyCode::Kp9            => { 1 }
-            KeyCode::KpDelete       => { 1 }
-            _ => { 0 }
-        }
-    }
-
-    fn scan_code(key_code: &KeyCode) -> u16 {
-        match key_code {
-            KeyCode::Alt            => { 56 }
-            KeyCode::AltGr          => { 56 }
-            KeyCode::BackQuote      => { 41 }
-            KeyCode::BackSlash      => { 43 }
-            KeyCode::Backspace      => { 14 }
-            KeyCode::CapsLock       => { 58 }
-            KeyCode::Comma          => { 51 }
-            KeyCode::ControlLeft    => { 29 }
-            KeyCode::ControlRight   => { 29 }
-            KeyCode::Delete         => { 83 }
-            KeyCode::Dot            => { 52 }
-            KeyCode::DownArrow      => { 80 }
-            KeyCode::End            => { 79 }
-            KeyCode::Equal          => { 13 }
-            KeyCode::Escape         => { 1 }
-            KeyCode::F1             => { 59 }
-            KeyCode::F10            => { 68 }
-            KeyCode::F11            => { 87 }
-            KeyCode::F12            => { 88 }
-            KeyCode::F2             => { 60 }
-            KeyCode::F3             => { 61 }
-            KeyCode::F4             => { 62 }
-            KeyCode::F5             => { 63 }
-            KeyCode::F6             => { 64 }
-            KeyCode::F7             => { 65 }
-            KeyCode::F8             => { 66 }
-            KeyCode::F9             => { 67 }
-            KeyCode::Home           => { 71 }
-            KeyCode::Insert         => { 82 }
-            KeyCode::KeyA           => { 30 }
-            KeyCode::KeyB           => { 48 }
-            KeyCode::KeyC           => { 46 }
-            KeyCode::KeyD           => { 32 }
-            KeyCode::KeyE           => { 18 }
-            KeyCode::KeyF           => { 33 }
-            KeyCode::KeyG           => { 34 }
-            KeyCode::KeyH           => { 35 }
-            KeyCode::KeyI           => { 23 }
-            KeyCode::KeyJ           => { 36 }
-            KeyCode::KeyK           => { 37 }
-            KeyCode::KeyL           => { 38 }
-            KeyCode::KeyM           => { 50 }
-            KeyCode::KeyN           => { 49 }
-            KeyCode::KeyO           => { 24 }
-            KeyCode::KeyP           => { 25 }
-            KeyCode::KeyQ           => { 16 }
-            KeyCode::KeyR           => { 19 }
-            KeyCode::KeyS           => { 31 }
-            KeyCode::KeyT           => { 20 }
-            KeyCode::KeyU           => { 22 }
-            KeyCode::KeyV           => { 47 }
-            KeyCode::KeyW           => { 17 }
-            KeyCode::KeyX           => { 45 }
-            KeyCode::KeyY           => { 21 }
-            KeyCode::KeyZ           => { 44 }
-            KeyCode::Kp0            => { 82 }
-            KeyCode::Kp1            => { 79 }
-            KeyCode::Kp2            => { 80 }
-            KeyCode::Kp3            => { 81 }
-            KeyCode::Kp4            => { 75 }
-            KeyCode::Kp5            => { 76 }
-            KeyCode::Kp6            => { 77 }
-            KeyCode::Kp7            => { 71 }
-            KeyCode::Kp8            => { 72 }
-            KeyCode::Kp9            => { 73 }
-            KeyCode::KpDelete       => { 83 }
-            KeyCode::KpDivide       => { 53 }
-            KeyCode::KpMinus        => { 74 }
-            KeyCode::KpMultiply     => { 55 }
-            KeyCode::KpPlus         => { 78 }
-            KeyCode::LeftArrow      => { 75 }
-            KeyCode::LeftBracket    => { 26 }
-            KeyCode::MetaLeft       => { 91 }
-            KeyCode::Minus          => { 12 }
-            KeyCode::Num0           => { 11 }
-            KeyCode::Num1           => { 2 }
-            KeyCode::Num2           => { 3 }
-            KeyCode::Num3           => { 4 }
-            KeyCode::Num4           => { 5 }
-            KeyCode::Num5           => { 6 }
-            KeyCode::Num6           => { 7 }
-            KeyCode::Num7           => { 8 }
-            KeyCode::Num8           => { 9 }
-            KeyCode::Num9           => { 10 }
-            KeyCode::NumLock        => { 69 }
-            KeyCode::PageDown       => { 81 }
-            KeyCode::PageUp         => { 73 }
-            KeyCode::Quote          => { 40 }
-            KeyCode::Return         => { 28 }
-            KeyCode::RightArrow     => { 77 }
-            KeyCode::RightBracket   => { 27 }
-            KeyCode::SemiColon      => { 39 }
-            KeyCode::ShiftLeft      => { 42 }
-            KeyCode::ShiftRight     => { 54 }
-            KeyCode::Slash          => { 53 }
-            KeyCode::Space          => { 0 }
-            KeyCode::Tab            => { 15 }
-            KeyCode::UpArrow        => { 72 }
-            _ => { 0 }
-        }
-    }
-
-    fn simulate_key_press(vk: u16, key_code: &KeyCode) {
+    fn simulate_key_press(key_code: &KeyCode) {
         let mut input = INPUT {
             type_: INPUT_KEYBOARD,
             u: unsafe { std::mem::zeroed() },
         };
-        let ext = check_ext(&key_code);
-        let sc = scan_code(&key_code);
+        let vk = key_code.to_int();
+        let ext = key_code.check_ext();
+        let sc = key_code.scan_code();
         unsafe {
             let ki = input.u.ki_mut();
-            ki.wVk = vk;
+            ki.wVk = vk.try_into().unwrap();
             ki.wScan = sc;
             ki.dwFlags = 0; // 按下鍵
             ki.dwFlags = ki.dwFlags | ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
@@ -186,16 +50,17 @@ mod libs {
         // unsafe { let ki = input.u.ki(); keybd_event(ki.wVk as u8, 0, ki.dwFlags, 0) };
     }
 
-    fn simulate_key_release(vk: u16, key_code: &KeyCode) {
+    fn simulate_key_release(key_code: &KeyCode) {
         let mut input = INPUT {
             type_: INPUT_KEYBOARD,
             u: unsafe { std::mem::zeroed() },
         };
-        let ext = check_ext(&key_code);
-        let sc = scan_code(&key_code);
+        let vk = key_code.to_int();
+        let ext = key_code.check_ext();
+        let sc = key_code.scan_code();
         unsafe {
             let ki = input.u.ki_mut();
-            ki.wVk = vk;
+            ki.wVk = vk.try_into().unwrap();
             ki.wScan = sc;
             ki.dwFlags = KEYEVENTF_KEYUP; // 放開鍵
             ki.dwFlags = ki.dwFlags | ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
@@ -687,21 +552,153 @@ mod libs {
                 KeyCode::Unknow         => { 0      }
             }
         }
+        pub fn check_ext(&self) -> u32 {
+            match self {
+                KeyCode::ControlRight   => { 1 }
+                KeyCode::Insert         => { 1 }
+                KeyCode::Delete         => { 1 }
+                KeyCode::Home           => { 1 }
+                KeyCode::End            => { 1 }
+                KeyCode::PageUp         => { 1 }
+                KeyCode::PageDown       => { 1 }
+                KeyCode::UpArrow        => { 1 }
+                KeyCode::DownArrow      => { 1 }
+                KeyCode::LeftArrow      => { 1 }
+                KeyCode::RightArrow     => { 1 }
+                KeyCode::NumLock        => { 1 }
+                KeyCode::KpMinus        => { 1 }
+                KeyCode::KpPlus         => { 1 }
+                KeyCode::KpMultiply     => { 1 }
+                KeyCode::KpDivide       => { 1 }
+                KeyCode::Kp0            => { 1 }
+                KeyCode::Kp1            => { 1 }
+                KeyCode::Kp2            => { 1 }
+                KeyCode::Kp3            => { 1 }
+                KeyCode::Kp4            => { 1 }
+                KeyCode::Kp5            => { 1 }
+                KeyCode::Kp6            => { 1 }
+                KeyCode::Kp7            => { 1 }
+                KeyCode::Kp8            => { 1 }
+                KeyCode::Kp9            => { 1 }
+                KeyCode::KpDelete       => { 1 }
+                _ => { 0 }
+            }
+        }
+        pub fn scan_code(&self) -> u16 {
+            match self {
+                KeyCode::Alt            => { 56 }
+                KeyCode::AltGr          => { 56 }
+                KeyCode::BackQuote      => { 41 }
+                KeyCode::BackSlash      => { 43 }
+                KeyCode::Backspace      => { 14 }
+                KeyCode::CapsLock       => { 58 }
+                KeyCode::Comma          => { 51 }
+                KeyCode::ControlLeft    => { 29 }
+                KeyCode::ControlRight   => { 29 }
+                KeyCode::Delete         => { 83 }
+                KeyCode::Dot            => { 52 }
+                KeyCode::DownArrow      => { 80 }
+                KeyCode::End            => { 79 }
+                KeyCode::Equal          => { 13 }
+                KeyCode::Escape         => { 1 }
+                KeyCode::F1             => { 59 }
+                KeyCode::F10            => { 68 }
+                KeyCode::F11            => { 87 }
+                KeyCode::F12            => { 88 }
+                KeyCode::F2             => { 60 }
+                KeyCode::F3             => { 61 }
+                KeyCode::F4             => { 62 }
+                KeyCode::F5             => { 63 }
+                KeyCode::F6             => { 64 }
+                KeyCode::F7             => { 65 }
+                KeyCode::F8             => { 66 }
+                KeyCode::F9             => { 67 }
+                KeyCode::Home           => { 71 }
+                KeyCode::Insert         => { 82 }
+                KeyCode::KeyA           => { 30 }
+                KeyCode::KeyB           => { 48 }
+                KeyCode::KeyC           => { 46 }
+                KeyCode::KeyD           => { 32 }
+                KeyCode::KeyE           => { 18 }
+                KeyCode::KeyF           => { 33 }
+                KeyCode::KeyG           => { 34 }
+                KeyCode::KeyH           => { 35 }
+                KeyCode::KeyI           => { 23 }
+                KeyCode::KeyJ           => { 36 }
+                KeyCode::KeyK           => { 37 }
+                KeyCode::KeyL           => { 38 }
+                KeyCode::KeyM           => { 50 }
+                KeyCode::KeyN           => { 49 }
+                KeyCode::KeyO           => { 24 }
+                KeyCode::KeyP           => { 25 }
+                KeyCode::KeyQ           => { 16 }
+                KeyCode::KeyR           => { 19 }
+                KeyCode::KeyS           => { 31 }
+                KeyCode::KeyT           => { 20 }
+                KeyCode::KeyU           => { 22 }
+                KeyCode::KeyV           => { 47 }
+                KeyCode::KeyW           => { 17 }
+                KeyCode::KeyX           => { 45 }
+                KeyCode::KeyY           => { 21 }
+                KeyCode::KeyZ           => { 44 }
+                KeyCode::Kp0            => { 82 }
+                KeyCode::Kp1            => { 79 }
+                KeyCode::Kp2            => { 80 }
+                KeyCode::Kp3            => { 81 }
+                KeyCode::Kp4            => { 75 }
+                KeyCode::Kp5            => { 76 }
+                KeyCode::Kp6            => { 77 }
+                KeyCode::Kp7            => { 71 }
+                KeyCode::Kp8            => { 72 }
+                KeyCode::Kp9            => { 73 }
+                KeyCode::KpDelete       => { 83 }
+                KeyCode::KpDivide       => { 53 }
+                KeyCode::KpMinus        => { 74 }
+                KeyCode::KpMultiply     => { 55 }
+                KeyCode::KpPlus         => { 78 }
+                KeyCode::LeftArrow      => { 75 }
+                KeyCode::LeftBracket    => { 26 }
+                KeyCode::MetaLeft       => { 91 }
+                KeyCode::Minus          => { 12 }
+                KeyCode::Num0           => { 11 }
+                KeyCode::Num1           => { 2 }
+                KeyCode::Num2           => { 3 }
+                KeyCode::Num3           => { 4 }
+                KeyCode::Num4           => { 5 }
+                KeyCode::Num5           => { 6 }
+                KeyCode::Num6           => { 7 }
+                KeyCode::Num7           => { 8 }
+                KeyCode::Num8           => { 9 }
+                KeyCode::Num9           => { 10 }
+                KeyCode::NumLock        => { 69 }
+                KeyCode::PageDown       => { 81 }
+                KeyCode::PageUp         => { 73 }
+                KeyCode::Quote          => { 40 }
+                KeyCode::Return         => { 28 }
+                KeyCode::RightArrow     => { 77 }
+                KeyCode::RightBracket   => { 27 }
+                KeyCode::SemiColon      => { 39 }
+                KeyCode::ShiftLeft      => { 42 }
+                KeyCode::ShiftRight     => { 54 }
+                KeyCode::Slash          => { 53 }
+                KeyCode::Space          => { 0 }
+                KeyCode::Tab            => { 15 }
+                KeyCode::UpArrow        => { 72 }
+                _ => { 0 }
+            }
+        }
 
         pub fn press(&self) {
-            let vk = self.to_int();
-            simulate_key_press((vk as u32).try_into().unwrap(), &self);
+            simulate_key_press(&self);
         }
 
         pub fn release(&self) {
-            let vk = self.to_int();
-            simulate_key_release((vk as u32).try_into().unwrap(), &self);
+            simulate_key_release(&self);
         }
 
         pub fn click(&self) {
-            let vk = self.to_int();
-            simulate_key_press((vk as u32).try_into().unwrap(), &self);
-            simulate_key_release((vk as u32).try_into().unwrap(), &self);
+            simulate_key_press(&self);
+            simulate_key_release(&self);
         }
     }
 
