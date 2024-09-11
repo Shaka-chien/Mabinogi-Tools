@@ -216,7 +216,7 @@ mod libs {
         }
     }
 
-    pub static mut event_callback: Option<Box<dyn FnMut(Event)>> = None;
+    pub static mut EVENT_CALLBACK: Option<Box<dyn FnMut(Event)>> = None;
 
     pub fn listen_keyboard_event() {
         static mut HOOK: HHOOK = null_mut();
@@ -228,9 +228,10 @@ mod libs {
                         let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
                         let key_code = KeyCode::from_code(kb_struct.vkCode);
                         let detail = KeyCodeDetail { code: kb_struct.vkCode, flags: kb_struct.flags, scan_code: kb_struct.scanCode};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::KeyboardEvent(ButtonAction::Down, key_code));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Keyboard(ButtonAction::Down, key_code));
                             } else {
                                 //println!("Key pressed :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
                                 println!("{:?} {:?} {:?}", key_code, detail, ButtonAction::Down);
@@ -241,9 +242,10 @@ mod libs {
                         let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
                         let key_code = KeyCode::from_code(kb_struct.vkCode);
                         let detail = KeyCodeDetail { code: kb_struct.vkCode, flags: kb_struct.flags, scan_code: kb_struct.scanCode};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::KeyboardEvent(ButtonAction::Up, key_code));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Keyboard(ButtonAction::Up, key_code));
                             } else {
                                 //println!("Key released :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
                                 println!("{:?} {:?} {:?}", key_code, detail, ButtonAction::Up);
@@ -284,9 +286,10 @@ mod libs {
                     WM_MOUSEMOVE => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::Move{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::MouseEvent(event));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Mouse(event));
                             } else {
                                 //println!("Mouse moved to: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                                 println!("{:?}", event);
@@ -296,9 +299,10 @@ mod libs {
                     WM_LBUTTONDOWN => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::LBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::MouseEvent(event));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Mouse(event));
                             } else {
                                 //println!("Left button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                                 println!("{:?}", event);
@@ -308,9 +312,10 @@ mod libs {
                     WM_LBUTTONUP => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::LBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::MouseEvent(event));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Mouse(event));
                             } else {
                                 //println!("Left button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                                 println!("{:?}", event);
@@ -320,9 +325,10 @@ mod libs {
                     WM_RBUTTONDOWN => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::RBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::MouseEvent(event));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Mouse(event));
                             } else {
                                 //println!("Right button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                                 println!("{:?}", event);
@@ -332,9 +338,10 @@ mod libs {
                     WM_RBUTTONUP => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::RBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::MouseEvent(event));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Mouse(event));
                             } else {
                                 //println!("Right button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                                 println!("{:?}", event);
@@ -344,9 +351,10 @@ mod libs {
                     WM_MBUTTONDOWN => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::MBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::MouseEvent(event));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Mouse(event));
                             } else {
                                 //println!("Middle button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                                 println!("{:?}", event);
@@ -356,9 +364,10 @@ mod libs {
                     WM_MBUTTONUP => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::MBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::MouseEvent(event));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Mouse(event));
                             } else {
                                 //println!("Middle button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
                                 println!("{:?}", event);
@@ -369,9 +378,10 @@ mod libs {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let delta = (mouse_info.mouseData >> 16) as i16;
                         let event = MouseEvent::Whell{x: mouse_info.pt.x, y: mouse_info.pt.y, delta};
+                        #[allow(static_mut_refs)]
                         unsafe {
-                            if let Some(cb) = &mut event_callback {
-                                cb(Event::MouseEvent(event));
+                            if let Some(cb) = &mut EVENT_CALLBACK {
+                                cb(Event::Mouse(event));
                             } else {
                                 //let up_down = if delta > 0 { "up" } else { "down" };
                                 //println!("Mouse wheel scrolled {} at: ({}, {}), delta: {}", up_down, mouse_info.pt.x, mouse_info.pt.y, delta);
@@ -414,6 +424,33 @@ mod libs {
         LBtnUp { x: i32, y: i32 },
         RBtnUp { x: i32, y: i32 },
         MBtnUp { x: i32, y: i32 },
+    }
+    impl MouseEvent {
+        pub fn get_mouse_position() -> (i32, i32) { get_mouse_position() }
+        pub fn do_it(&self) {
+            match self {
+                MouseEvent::Move { x, y } => { simulate_mouse_move(*x, *y); }
+                MouseEvent::Whell{ x, y, delta } => { simulate_mouse_whell(*x, *y, *delta); }
+                MouseEvent::LBtnDown { x, y } => { simulate_mouse_lbtn_press(*x, *y); }
+                MouseEvent::RBtnDown { x, y } => { simulate_mouse_rbtn_press(*x, *y); }
+                MouseEvent::MBtnDown { x, y } => { simulate_mouse_mbtn_press(*x, *y); }
+                MouseEvent::LBtnUp { x, y } => { simulate_mouse_lbtn_release(*x, *y); }
+                MouseEvent::RBtnUp { x, y } => { simulate_mouse_rbtn_release(*x, *y); }
+                MouseEvent::MBtnUp { x, y } => { simulate_mouse_mbtn_release(*x, *y); }
+            }
+        }
+        pub fn click(&self) {
+            let (_x, _y) = get_mouse_position();
+            match self {
+                MouseEvent::LBtnDown { x: _, y: _ } => { simulate_mouse_lbtn_press(_x, _y); simulate_mouse_lbtn_release(_x, _y); }
+                MouseEvent::RBtnDown { x: _, y: _ } => { simulate_mouse_rbtn_press(_x, _y); simulate_mouse_rbtn_release(_x, _y); }
+                MouseEvent::MBtnDown { x: _, y: _ } => { simulate_mouse_mbtn_press(_x, _y); simulate_mouse_mbtn_release(_x, _y); }
+                MouseEvent::LBtnUp { x: _, y: _ } => { simulate_mouse_lbtn_press(_x, _y); simulate_mouse_lbtn_release(_x, _y); }
+                MouseEvent::RBtnUp { x: _, y: _ } => { simulate_mouse_rbtn_press(_x, _y); simulate_mouse_rbtn_release(_x, _y); }
+                MouseEvent::MBtnUp { x: _, y: _ } => { simulate_mouse_mbtn_press(_x, _y); simulate_mouse_mbtn_release(_x, _y); }
+                _ => {}
+            }
+        }
     }
 
     #[derive(Debug)]
@@ -880,15 +917,36 @@ mod libs {
                 _ => { 0 }
             }
         }
+        pub fn down(&self) {
+            let code = self.to_code();
+            let flags_ext = self.flags_ext();
+            let scan_code = self.scan_code();
+            simulate_key_press(code, flags_ext, scan_code);
+        }
+        pub fn up(&self) {
+            let code = self.to_code();
+            let flags_ext = self.flags_ext();
+            let scan_code = self.scan_code();
+            simulate_key_release(code, flags_ext, scan_code);
+        }
+        pub fn click(&self) {
+            let code = self.to_code();
+            let flags_ext = self.flags_ext();
+            let scan_code = self.scan_code();
+            simulate_key_press(code, flags_ext, scan_code);
+            simulate_key_release(code, flags_ext, scan_code);
+        }
     }
 
+    #[allow(dead_code)]
     #[derive(Debug)]
     pub struct KeyCodeDetail { code: u32, flags: u32, scan_code: u32 }
 
+    #[allow(dead_code)]
     #[derive(Debug)]
     pub enum Event {
-        MouseEvent(MouseEvent),
-        KeyboardEvent(ButtonAction, KeyCode),
+        Mouse(MouseEvent),
+        Keyboard(ButtonAction, KeyCode),
     }
 
     // --- commons ---
@@ -932,6 +990,7 @@ mod ctrl {
     };
 
     // --- 狀態 ---
+    #[allow(dead_code)]
     pub trait State {
         fn enter(self: Rc<Self>) {}
         fn out(self: Rc<Self>) {}
@@ -939,6 +998,7 @@ mod ctrl {
         #[allow(unused_variables)]
         fn do_event(self: Rc<Self>, event: libs::Event) {}
     }
+    #[allow(dead_code)]
     pub struct WaitingState { flag: Cell<bool> }
     impl Default for WaitingState {
         fn default() -> WaitingState {
@@ -953,7 +1013,8 @@ mod ctrl {
             Context { state: Rc::new(WaitingState{..Default::default()}) }
         }
         pub fn event_callback(&mut self, event: libs::Event) {
-            self.state.clone().do_event(event);
+            let state = Rc::clone(&self.state);
+            state.do_event(event);
         }
     }
 
@@ -962,7 +1023,7 @@ mod ctrl {
 
         let mut ctx = Context::new();
         unsafe {
-            libs::event_callback = Some(Box::new(move |event| {
+            libs::EVENT_CALLBACK = Some(Box::new(move |event| {
                 //println!("{:?}", event);
                 ctx.event_callback(event);
             }));
