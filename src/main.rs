@@ -949,6 +949,26 @@ mod libs {
         Keyboard(ButtonAction, KeyCode),
     }
 
+    // 貼上
+    #[allow(dead_code)]
+    pub fn past_text<S: AsRef<str>>(msg: S) {
+        let msg = String::from(msg.as_ref());
+        // 剪貼簿 library
+        extern crate clipboard;
+        use clipboard::ClipboardProvider;
+        use clipboard::ClipboardContext;
+
+        // 將文字放倒剪貼簿中
+        let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+        ctx.set_contents(msg).unwrap();
+
+        // 模擬按下 Ctrl + V (貼上)
+        KeyCode::ControlLeft.down();
+        KeyCode::KeyV.down();
+        KeyCode::KeyV.up();
+        KeyCode::ControlLeft.up();
+    }
+
     // --- commons ---
     // 休息
     #[allow(dead_code)]
@@ -996,7 +1016,28 @@ mod ctrl {
         fn out(self: Rc<Self>) {}
 
         #[allow(unused_variables)]
-        fn do_event(self: Rc<Self>, event: libs::Event) {}
+        fn do_event(self: Rc<Self>, event: libs::Event) {
+            match event {
+                libs::Event::Mouse(event) => {
+                    self.do_mouse_event(event)
+                }
+                libs::Event::Keyboard(act, event) => {
+                    match act {
+                        libs::ButtonAction::Down => { self.do_keyboard_down(event) }
+                        libs::ButtonAction::Up => { self.do_keyboard_up(event) }
+                    }
+                }
+            }
+        }
+
+        #[allow(unused_variables)]
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) { }
+
+        #[allow(unused_variables)]
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) { }
+
+        #[allow(unused_variables)]
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) { }
     }
     #[allow(dead_code)]
     pub struct WaitingState { flag: Cell<bool> }
@@ -1005,7 +1046,42 @@ mod ctrl {
             WaitingState { flag: Cell::new(false) }
         }
     }
-    impl State for WaitingState {}
+    impl State for WaitingState {
+        fn enter(self: Rc<Self>) {
+            self.flag.set(false);
+        }
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) {
+            match event {
+                libs::KeyCode::ControlRight => {
+                    if !self.flag.get() {
+                        self.flag.set(true);
+                        libs::sleep(50);
+                        libs::KeyCode::Return.click();
+                        libs::sleep(50);
+                        libs::past_text("請選擇 - h:hello, m: 取得鼠位置, q:退出 :: ");
+                    }
+                }
+                libs::KeyCode::KeyQ => {
+                    if self.flag.get() {
+                        libs::KeyCode::End.click();
+                        libs::sleep(100);
+                        libs::KeyCode::ShiftLeft.down();
+                        libs::sleep(100);
+                        libs::KeyCode::Home.click();
+                        libs::sleep(100);
+                        libs::KeyCode::ShiftLeft.up();
+                        libs::sleep(100);
+                        libs::KeyCode::Backspace.click();
+                        libs::sleep(100);
+                        libs::past_text("程式已退出");
+
+                        libs::exit();
+                    }
+                }
+                _ => { }
+            }
+        }
+    }
 
     pub struct Context { state: Rc<dyn State> }
     impl Context {
