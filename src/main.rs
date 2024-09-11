@@ -1016,7 +1016,7 @@ mod ctrl {
         fn out(self: Rc<Self>) {}
 
         #[allow(unused_variables)]
-        fn do_event(self: Rc<Self>, event: libs::Event) {
+        fn do_event(self: Rc<Self>, event: libs::Event) -> Rc<dyn State> {
             match event {
                 libs::Event::Mouse(event) => {
                     self.do_mouse_event(event)
@@ -1031,26 +1031,40 @@ mod ctrl {
         }
 
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) { }
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State>;
 
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) { }
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State>;
 
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) { }
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State>;
     }
     #[allow(dead_code)]
     pub struct WaitingState { flag: Cell<bool> }
-    impl Default for WaitingState {
-        fn default() -> WaitingState {
+    impl WaitingState {
+        fn new() -> WaitingState {
             WaitingState { flag: Cell::new(false) }
         }
     }
     impl State for WaitingState {
-        fn enter(self: Rc<Self>) {
-            self.flag.set(false);
+        fn out(self: Rc<Self>) {
+            libs::KeyCode::End.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.down();
+            libs::sleep(100);
+            libs::KeyCode::Home.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.up();
+            libs::sleep(100);
+            libs::KeyCode::Backspace.click();
+            libs::sleep(100);
         }
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) {
+        #[allow(unused_variables)]
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> { self.clone() }
+        #[allow(unused_variables)]
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        #[allow(unused_variables)]
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> {
             match event {
                 libs::KeyCode::ControlRight => {
                     if !self.flag.get() {
@@ -1061,36 +1075,96 @@ mod ctrl {
                         libs::past_text("請選擇 - h:hello, m: 取得鼠位置, q:退出 :: ");
                     }
                 }
+                libs::KeyCode::KeyM => {
+                    if self.flag.get() {
+                        return Rc::new(MousePositionState::new());
+                    }
+                }
                 libs::KeyCode::KeyQ => {
                     if self.flag.get() {
-                        libs::KeyCode::End.click();
-                        libs::sleep(100);
-                        libs::KeyCode::ShiftLeft.down();
-                        libs::sleep(100);
-                        libs::KeyCode::Home.click();
-                        libs::sleep(100);
-                        libs::KeyCode::ShiftLeft.up();
-                        libs::sleep(100);
-                        libs::KeyCode::Backspace.click();
-                        libs::sleep(100);
-                        libs::past_text("程式已退出");
-
-                        libs::exit();
+                        return Rc::new(ExitState::new());
                     }
                 }
                 _ => { }
             }
+            self.clone()
         }
+    }
+
+    pub struct MousePositionState {}
+    impl MousePositionState {
+        fn new() -> MousePositionState { MousePositionState {} }
+    }
+    impl State for MousePositionState {
+        fn enter(self: Rc<Self>) {
+            let (x, y) = libs::MouseEvent::get_mouse_position();
+            libs::past_text(format!("當前滑鼠位置為 x: {}, y: {}, esc 回到 WaitingState", x, y));
+        }
+        fn out(self: Rc<Self>) {
+            libs::KeyCode::End.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.down();
+            libs::sleep(100);
+            libs::KeyCode::Home.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.up();
+            libs::sleep(100);
+            libs::KeyCode::Backspace.click();
+            libs::sleep(100);
+            libs::KeyCode::Return.click();
+        }
+        #[allow(unused_variables)]
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> { self.clone() }
+        #[allow(unused_variables)]
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        #[allow(unused_variables)]
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> {
+            match event {
+                libs::KeyCode::Escape => {
+                    return Rc::new(WaitingState::new());
+                }
+                _ => { }
+            }
+            self.clone()
+        }
+    }
+
+    pub struct ExitState {}
+    impl ExitState {
+        fn new() -> ExitState { ExitState {} }
+    }
+    impl State for ExitState {
+        fn enter(self: Rc<Self>) {
+            libs::past_text("程式已退出");
+            libs::exit();
+        }
+        #[allow(unused_variables)]
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> { self.clone() }
+        #[allow(unused_variables)]
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        #[allow(unused_variables)]
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
     }
 
     pub struct Context { state: Rc<dyn State> }
     impl Context {
         pub fn new() -> Context {
-            Context { state: Rc::new(WaitingState{..Default::default()}) }
+            let init_state = Rc::new(WaitingState::new());
+            init_state.clone().enter();
+            Context { state: init_state.clone() }
         }
         pub fn event_callback(&mut self, event: libs::Event) {
             let state = Rc::clone(&self.state);
-            state.do_event(event);
+            let next_state = state.do_event(event);
+            self.state_change(next_state);
+        }
+        fn state_change(&mut self, next_state: Rc<dyn State>) {
+            if !Rc::ptr_eq(&self.state, &next_state) {
+                // 發生 state 移轉
+                self.state.clone().out();
+                self.state = next_state;
+                self.state.clone().enter();
+            }
         }
     }
 
