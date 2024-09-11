@@ -442,6 +442,7 @@ mod libs {
         pub fn click() {
             let (x, y) = get_mouse_position();
             simulate_mouse_lbtn_press(x, y);
+            sleep(50);
             simulate_mouse_lbtn_release(x, y);
         }
     }
@@ -927,6 +928,7 @@ mod libs {
             let flags_ext = self.flags_ext();
             let scan_code = self.scan_code();
             simulate_key_press(code, flags_ext, scan_code);
+            sleep(50);
             simulate_key_release(code, flags_ext, scan_code);
         }
     }
@@ -1211,8 +1213,10 @@ mod ctrl {
                     return Rc::new(WaitingState::new());
                 }
                 libs::KeyCode::ShiftLeft => {
-                    libs::sleep(20);
-                    libs::KeyCode::Alt.down();
+                    if self.alive.load(Ordering::SeqCst) {
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                    }
                 }
                 _ => { }
             }
