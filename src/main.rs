@@ -439,17 +439,10 @@ mod libs {
                 MouseEvent::MBtnUp { x, y } => { simulate_mouse_mbtn_release(*x, *y); }
             }
         }
-        pub fn click(&self) {
-            let (_x, _y) = get_mouse_position();
-            match self {
-                MouseEvent::LBtnDown { x: _, y: _ } => { simulate_mouse_lbtn_press(_x, _y); simulate_mouse_lbtn_release(_x, _y); }
-                MouseEvent::RBtnDown { x: _, y: _ } => { simulate_mouse_rbtn_press(_x, _y); simulate_mouse_rbtn_release(_x, _y); }
-                MouseEvent::MBtnDown { x: _, y: _ } => { simulate_mouse_mbtn_press(_x, _y); simulate_mouse_mbtn_release(_x, _y); }
-                MouseEvent::LBtnUp { x: _, y: _ } => { simulate_mouse_lbtn_press(_x, _y); simulate_mouse_lbtn_release(_x, _y); }
-                MouseEvent::RBtnUp { x: _, y: _ } => { simulate_mouse_rbtn_press(_x, _y); simulate_mouse_rbtn_release(_x, _y); }
-                MouseEvent::MBtnUp { x: _, y: _ } => { simulate_mouse_mbtn_press(_x, _y); simulate_mouse_mbtn_release(_x, _y); }
-                _ => {}
-            }
+        pub fn click() {
+            let (x, y) = get_mouse_position();
+            simulate_mouse_lbtn_press(x, y);
+            simulate_mouse_lbtn_release(x, y);
         }
     }
 
@@ -1007,6 +1000,11 @@ mod ctrl {
     use std::{
         rc::Rc,
         cell::Cell,
+        sync,
+        thread,
+        sync::atomic::{
+            AtomicBool, Ordering
+        },
     };
 
     // --- 狀態 ---
@@ -1039,6 +1037,8 @@ mod ctrl {
         #[allow(unused_variables)]
         fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State>;
     }
+
+    // --- 等待(入口) ---
     #[allow(dead_code)]
     pub struct WaitingState { flag: Cell<bool> }
     impl WaitingState {
@@ -1048,6 +1048,7 @@ mod ctrl {
     }
     impl State for WaitingState {
         fn out(self: Rc<Self>) {
+            libs::sleep(200);
             libs::KeyCode::End.click();
             libs::sleep(100);
             libs::KeyCode::ShiftLeft.down();
@@ -1072,12 +1073,17 @@ mod ctrl {
                         libs::sleep(50);
                         libs::KeyCode::Return.click();
                         libs::sleep(50);
-                        libs::past_text("請選擇 - h:hello, m: 取得鼠位置, q:退出 :: ");
+                        libs::past_text("請選擇 - c: 滑鼠連點, m: 取得滑鼠位置, q:退出 :: ");
                     }
                 }
                 libs::KeyCode::KeyM => {
                     if self.flag.get() {
                         return Rc::new(MousePositionState::new());
+                    }
+                }
+                libs::KeyCode::KeyC => {
+                    if self.flag.get() {
+                        return Rc::new(MouseClicksState::new());
                     }
                 }
                 libs::KeyCode::KeyQ => {
@@ -1091,6 +1097,7 @@ mod ctrl {
         }
     }
 
+    // --- 取得滑鼠位置 ---
     pub struct MousePositionState {}
     impl MousePositionState {
         fn new() -> MousePositionState { MousePositionState {} }
@@ -1129,6 +1136,91 @@ mod ctrl {
         }
     }
 
+    
+    // --- 滑鼠連點 ---
+    pub struct MouseClicksState {
+        handle: Cell<Option<thread::JoinHandle<()>>>,
+        alive: sync::Arc<AtomicBool>,
+        r_mouse_btn: sync::Arc<AtomicBool>,
+    }
+    impl MouseClicksState {
+        fn new() -> MouseClicksState {
+            MouseClicksState {
+                handle: Cell::new(None),
+                alive: sync::Arc::new(AtomicBool::new(false)),
+                r_mouse_btn: sync::Arc::new(AtomicBool::new(false)),
+            }
+        }
+    }
+    impl State for MouseClicksState {
+        fn enter(self: Rc<Self>) {
+            let alive = self.alive.clone();
+            let r_mouse_btn = self.r_mouse_btn.clone();
+            if !alive.load(Ordering::SeqCst) {
+                libs::past_text(format!("滑鼠連點啟動中, esc 回到 WaitingState"));
+                self.alive.store(true, Ordering::SeqCst);
+                self.handle.set(Some(thread::spawn(move || {
+                    while alive.load(Ordering::SeqCst) {
+                        if !r_mouse_btn.load(Ordering::SeqCst) {
+                            libs::MouseEvent::click();
+                        }
+                        libs::sleep(200);
+                    }
+                })));
+            }
+        }
+        fn out(self: Rc<Self>) {
+            libs::sleep(50);
+            libs::KeyCode::Return.click();
+            libs::sleep(100);
+            libs::KeyCode::End.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.down();
+            libs::sleep(100);
+            libs::KeyCode::Home.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.up();
+            libs::sleep(100);
+            libs::KeyCode::Backspace.click();
+            libs::sleep(100);
+            libs::KeyCode::Return.click();
+        }
+        #[allow(unused_variables)]
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> {
+            match event {
+                libs::MouseEvent::RBtnDown { x, y } => {
+                    self.r_mouse_btn.store(true, Ordering::SeqCst);
+                }
+                libs::MouseEvent::RBtnUp { x, y } => {
+                    self.r_mouse_btn.store(false, Ordering::SeqCst);
+                }
+                _ => {}
+            }
+            self.clone()
+        }
+        #[allow(unused_variables)]
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        #[allow(unused_variables)]
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> {
+            match event {
+                libs::KeyCode::Escape => {
+                    self.alive.store(false, Ordering::SeqCst);
+                    self.handle
+                        .take().expect("Called stop on non-running thread")
+                        .join().expect("Could not join spawned thread");
+                    return Rc::new(WaitingState::new());
+                }
+                libs::KeyCode::ShiftLeft => {
+                    libs::sleep(20);
+                    libs::KeyCode::Alt.down();
+                }
+                _ => { }
+            }
+            self.clone()
+        }
+    }
+
+    // --- 離開 ---
     pub struct ExitState {}
     impl ExitState {
         fn new() -> ExitState { ExitState {} }
@@ -1146,6 +1238,7 @@ mod ctrl {
         fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
     }
 
+    // --- Context ---
     pub struct Context { state: Rc<dyn State> }
     impl Context {
         pub fn new() -> Context {
@@ -1168,9 +1261,8 @@ mod ctrl {
         }
     }
 
+    // --- 啟動 (listen 系統狀態) ---
     pub fn listen() {
-        use std::thread;
-
         let mut ctx = Context::new();
         unsafe {
             libs::EVENT_CALLBACK = Some(Box::new(move |event| {
