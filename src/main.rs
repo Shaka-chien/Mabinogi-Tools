@@ -19,7 +19,7 @@ mod libs {
     use winapi::um::libloaderapi::GetModuleHandleW;
 
     // --- get system info ---
-    fn get_mouse_position() -> (i32, i32) {
+    pub fn get_mouse_position() -> (i32, i32) {
         unsafe {
             let mut point: POINT = POINT { x: 0, y: 0 };
             if GetCursorPos(&mut point) != 0 {
@@ -31,45 +31,39 @@ mod libs {
     }
 
     // --- keyboard, mouse simulater core ---
-    fn simulate_key_press(key_code: &KeyCode) {
+    pub fn simulate_key_press(code: u32, flags_ext: u32, scan_code: u16) {
         let mut input = INPUT {
             type_: INPUT_KEYBOARD,
             u: unsafe { std::mem::zeroed() },
         };
-        let vk = key_code.to_int();
-        let ext = key_code.check_ext();
-        let sc = key_code.scan_code();
         unsafe {
             let ki = input.u.ki_mut();
-            ki.wVk = vk.try_into().unwrap();
-            ki.wScan = sc;
+            ki.wVk = code.try_into().unwrap();
+            ki.wScan = scan_code;
             ki.dwFlags = 0; // 按下鍵
-            ki.dwFlags = ki.dwFlags | ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
+            ki.dwFlags = ki.dwFlags | flags_ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
         }
         unsafe { SendInput(1, &mut input, size_of::<INPUT>() as i32) };
         // unsafe { let ki = input.u.ki(); keybd_event(ki.wVk as u8, 0, ki.dwFlags, 0) };
     }
 
-    fn simulate_key_release(key_code: &KeyCode) {
+    pub fn simulate_key_release(code: u32, flags_ext: u32, scan_code: u16) {
         let mut input = INPUT {
             type_: INPUT_KEYBOARD,
             u: unsafe { std::mem::zeroed() },
         };
-        let vk = key_code.to_int();
-        let ext = key_code.check_ext();
-        let sc = key_code.scan_code();
         unsafe {
             let ki = input.u.ki_mut();
-            ki.wVk = vk.try_into().unwrap();
-            ki.wScan = sc;
+            ki.wVk = code.try_into().unwrap();
+            ki.wScan = scan_code;
             ki.dwFlags = KEYEVENTF_KEYUP; // 放開鍵
-            ki.dwFlags = ki.dwFlags | ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
+            ki.dwFlags = ki.dwFlags | flags_ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
         }
         unsafe { SendInput(1, &mut input, size_of::<INPUT>() as i32) };
         // unsafe { let ki = input.u.ki(); keybd_event(ki.wVk as u8, 0, ki.dwFlags, 0) };
     }
 
-    fn convert_to_absolute(x: i32, y: i32) -> (i32, i32) {
+    pub fn convert_to_absolute(x: i32, y: i32) -> (i32, i32) {
         let screen_width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
         let screen_height = unsafe { GetSystemMetrics(SM_CYSCREEN) };
         
@@ -79,7 +73,7 @@ mod libs {
         (dx, dy)
     }
 
-    fn simulate_mouse_move(x: i32, y: i32) {
+    pub fn simulate_mouse_move(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
         let mut input = INPUT {
@@ -95,7 +89,7 @@ mod libs {
         unsafe { SendInput(1, &mut input, size_of::<INPUT>() as i32) };
     }
 
-    fn simulate_mouse_lbtn_press(x: i32, y: i32) {
+    pub fn simulate_mouse_lbtn_press(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
         let mut input_down = INPUT {
@@ -113,7 +107,7 @@ mod libs {
         }
     }
 
-    fn simulate_mouse_lbtn_release(x: i32, y: i32) {
+    pub fn simulate_mouse_lbtn_release(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
         let mut input_up = INPUT {
@@ -131,7 +125,7 @@ mod libs {
         }
     }
 
-    fn simulate_mouse_rbtn_press(x: i32, y: i32) {
+    pub fn simulate_mouse_rbtn_press(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
         let mut input_down = INPUT {
@@ -149,7 +143,7 @@ mod libs {
         }
     }
 
-    fn simulate_mouse_rbtn_release(x: i32, y: i32) {
+    pub fn simulate_mouse_rbtn_release(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
         let mut input_up = INPUT {
@@ -167,7 +161,7 @@ mod libs {
         }
     }
 
-    fn simulate_mouse_mbtn_press(x: i32, y: i32) {
+    pub fn simulate_mouse_mbtn_press(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
         let mut input_down = INPUT {
@@ -185,7 +179,7 @@ mod libs {
         }
     }
 
-    fn simulate_mouse_mbtn_release(x: i32, y: i32) {
+    pub fn simulate_mouse_mbtn_release(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
         let mut input_up = INPUT {
@@ -203,7 +197,7 @@ mod libs {
         }
     }
 
-    fn simulate_mouse_whell(x: i32, y: i32, delta: i16) {
+    pub fn simulate_mouse_whell(x: i32, y: i32, delta: i16) {
         let (dx, dy) = convert_to_absolute(x, y);
 
         let mut input_up = INPUT {
@@ -222,10 +216,210 @@ mod libs {
         }
     }
 
-    // --- keyboard, mouse public method ---
+    static mut mouse_event_callback: Option<Box<dyn FnMut(MouseEvent)>> = None;
+    static mut keyboard_event_callback: Option<Box<dyn FnMut(ButtonAction, KeyCode)>> = None;
+
+    pub fn listen_keyboard_event() {
+        static mut HOOK: HHOOK = null_mut();
+        extern "system" fn raw_callback(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
+            if code >= 0 {
+                match w_param as DWORD {
+                    // --- keyboard event ---
+                    WM_KEYDOWN => {
+                        let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
+                        let key_code = KeyCode::from_code(kb_struct.vkCode);
+                        let detail = KeyCodeDetail { code: kb_struct.vkCode, flags: kb_struct.flags, scan_code: kb_struct.scanCode};
+                        unsafe {
+                            if let Some(cb) = &mut keyboard_event_callback {
+                                cb(ButtonAction::Down, key_code);
+                            } else {
+                                //println!("Key pressed :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
+                                println!("{:?} {:?} {:?}", key_code, detail, ButtonAction::Down);
+                            }
+                        }
+                    }
+                    WM_KEYUP => {
+                        let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
+                        let key_code = KeyCode::from_code(kb_struct.vkCode);
+                        let detail = KeyCodeDetail { code: kb_struct.vkCode, flags: kb_struct.flags, scan_code: kb_struct.scanCode};
+                        unsafe {
+                            if let Some(cb) = &mut keyboard_event_callback {
+                                cb(ButtonAction::Up, key_code);
+                            } else {
+                                //println!("Key released :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
+                                println!("{:?} {:?} {:?}", key_code, detail, ButtonAction::Up);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            unsafe { CallNextHookEx(HOOK, code, w_param, l_param) }
+        }
+        unsafe {
+            let h_instance = GetModuleHandleW(null_mut());
+            HOOK = SetWindowsHookExW(
+                WH_KEYBOARD_LL,
+                Some(raw_callback),
+                h_instance,
+                0,
+            );
+
+            if HOOK.is_null() {
+                println!("Failed to set hook");
+                return;
+            }
+
+            let mut msg = std::mem::zeroed();
+            while GetMessageW(&mut msg, null_mut(), 0, 0) != 0 {}
+            UnhookWindowsHookEx(HOOK);
+        }
+    }
+
+    pub fn listen_mouse_event() {
+        static mut HOOK: HHOOK = null_mut();
+        extern "system" fn raw_callback(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
+            if code >= 0 {
+                match w_param as DWORD {
+                    // --- mouse event ---
+                    WM_MOUSEMOVE => {
+                        let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
+                        let event = MouseEvent::Move{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        unsafe {
+                            if let Some(cb) = &mut mouse_event_callback {
+                                cb(event);
+                            } else {
+                                //println!("Mouse moved to: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
+                                println!("{:?}", event);
+                            }
+                        }
+                    }
+                    WM_LBUTTONDOWN => {
+                        let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
+                        let event = MouseEvent::LBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        unsafe {
+                            if let Some(cb) = &mut mouse_event_callback {
+                                cb(event);
+                            } else {
+                                //println!("Left button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
+                                println!("{:?}", event);
+                            }
+                        }
+                    }
+                    WM_LBUTTONUP => {
+                        let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
+                        let event = MouseEvent::LBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        unsafe {
+                            if let Some(cb) = &mut mouse_event_callback {
+                                cb(event);
+                            } else {
+                                //println!("Left button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
+                                println!("{:?}", event);
+                            }
+                        }
+                    }
+                    WM_RBUTTONDOWN => {
+                        let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
+                        let event = MouseEvent::RBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        unsafe {
+                            if let Some(cb) = &mut mouse_event_callback {
+                                cb(event);
+                            } else {
+                                //println!("Right button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
+                                println!("{:?}", event);
+                            }
+                        }
+                    }
+                    WM_RBUTTONUP => {
+                        let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
+                        let event = MouseEvent::RBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        unsafe {
+                            if let Some(cb) = &mut mouse_event_callback {
+                                cb(event);
+                            } else {
+                                //println!("Right button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
+                                println!("{:?}", event);
+                            }
+                        }
+                    }
+                    WM_MBUTTONDOWN => {
+                        let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
+                        let event = MouseEvent::MBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        unsafe {
+                            if let Some(cb) = &mut mouse_event_callback {
+                                cb(event);
+                            } else {
+                                //println!("Middle button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
+                                println!("{:?}", event);
+                            }
+                        }
+                    }
+                    WM_MBUTTONUP => {
+                        let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
+                        let event = MouseEvent::MBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        unsafe {
+                            if let Some(cb) = &mut mouse_event_callback {
+                                cb(event);
+                            } else {
+                                //println!("Middle button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
+                                println!("{:?}", event);
+                            }
+                        }
+                    }
+                    WM_MOUSEWHEEL => {
+                        let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
+                        let delta = (mouse_info.mouseData >> 16) as i16;
+                        let event = MouseEvent::Whell{x: mouse_info.pt.x, y: mouse_info.pt.y, delta};
+                        unsafe {
+                            if let Some(cb) = &mut mouse_event_callback {
+                                cb(event);
+                            } else {
+                                //let up_down = if delta > 0 { "up" } else { "down" };
+                                //println!("Mouse wheel scrolled {} at: ({}, {}), delta: {}", up_down, mouse_info.pt.x, mouse_info.pt.y, delta);
+                                println!("{:?}", event);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            unsafe { CallNextHookEx(HOOK, code, w_param, l_param) }
+        }
+        unsafe {
+            let h_instance = GetModuleHandleW(null_mut());
+            HOOK = SetWindowsHookExW(
+                WH_MOUSE_LL,
+                Some(raw_callback),
+                h_instance,
+                0,
+            );
+
+            if HOOK.is_null() {
+                println!("Failed to set hook");
+                return;
+            }
+
+            let mut msg = std::mem::zeroed();
+            while GetMessageW(&mut msg, null_mut(), 0, 0) != 0 {}
+            UnhookWindowsHookEx(HOOK);
+        }
+    }
+
     #[derive(Debug)]
-    pub enum ButtonState {
-        Press, Release
+    pub enum MouseEvent {
+        Move { x: i32, y: i32 },
+        Whell{ x: i32, y: i32, delta: i16 },
+        LBtnDown { x: i32, y: i32 },
+        RBtnDown { x: i32, y: i32 },
+        MBtnDown { x: i32, y: i32 },
+        LBtnUp { x: i32, y: i32 },
+        RBtnUp { x: i32, y: i32 },
+        MBtnUp { x: i32, y: i32 },
+    }
+
+    #[derive(Debug)]
+    pub enum ButtonAction {
+        Down, Up
     }
 
     #[derive(Debug)]
@@ -336,7 +530,7 @@ mod libs {
         Unknow,
     }
     impl KeyCode {
-        pub fn from_int(code: u32) -> KeyCode {
+        pub fn from_code(code: u32) -> KeyCode {
             match code {
                 164     => { KeyCode::Alt }
                 165     => { KeyCode::AltGr }
@@ -444,7 +638,7 @@ mod libs {
                 _       => { println!("Unknow: {code}"); KeyCode::Unknow }
             }
         }
-        pub fn to_int(&self) -> u32 {
+        pub fn to_code(&self) -> u32 {
             match self {
                 KeyCode::Alt            => { 164    }
                 KeyCode::AltGr          => { 165    }
@@ -552,7 +746,7 @@ mod libs {
                 KeyCode::Unknow         => { 0      }
             }
         }
-        pub fn check_ext(&self) -> u32 {
+        pub fn flags_ext(&self) -> u32 {
             match self {
                 KeyCode::ControlRight   => { 1 }
                 KeyCode::Insert         => { 1 }
@@ -687,338 +881,10 @@ mod libs {
                 _ => { 0 }
             }
         }
-
-        pub fn press(&self) {
-            simulate_key_press(&self);
-        }
-
-        pub fn release(&self) {
-            simulate_key_release(&self);
-        }
-
-        pub fn click(&self) {
-            simulate_key_press(&self);
-            simulate_key_release(&self);
-        }
     }
 
     #[derive(Debug)]
-    pub enum MouseAction {
-        Move(i32, i32), // x, y
-        Whell(i32, i32, i16), // x, y, delta
-    }
-    impl MouseAction {
-        pub fn do_it(&self) {
-            match self {
-                MouseAction::Move(x, y)           => { simulate_mouse_move(*x, *y) }
-                MouseAction::Whell(x, y, delta)   => { simulate_mouse_whell(*x, *y, *delta) }
-            }
-        }
-        pub fn get_mouse_position() -> (i32, i32) {
-            get_mouse_position()
-        }
-    }
-    #[derive(Debug)]
-    pub enum MouseButton {
-        LBtn(i32, i32), // x, y
-        RBtn(i32, i32), // x, y
-        MBtn(i32, i32), // x, y
-    }
-    impl MouseButton {
-        pub fn press(&self) {
-            match self {
-                MouseButton::LBtn(x, y)     => {
-                    simulate_mouse_lbtn_press(*x, *y)
-                }
-                MouseButton::RBtn(x, y)     => {
-                    simulate_mouse_rbtn_press(*x, *y)
-                }
-                MouseButton::MBtn(x, y)     => {
-                    simulate_mouse_mbtn_press(*x, *y)
-                }
-            }
-        }
-        pub fn release(&self) {
-            match self {
-                MouseButton::LBtn(x, y)     => {
-                    simulate_mouse_lbtn_release(*x, *y)
-                }
-                MouseButton::RBtn(x, y)     => {
-                    simulate_mouse_rbtn_release(*x, *y)
-                }
-                MouseButton::MBtn(x, y)     => {
-                    simulate_mouse_mbtn_release(*x, *y)
-                }
-            }
-        }
-        pub fn click(&self) {
-            match self {
-                MouseButton::LBtn(x, y)     => {
-                    simulate_mouse_lbtn_press(*x, *y);
-                    simulate_mouse_lbtn_release(*x, *y)
-                }
-                MouseButton::RBtn(x, y)     => {
-                    simulate_mouse_rbtn_press(*x, *y);
-                    simulate_mouse_rbtn_release(*x, *y)
-                }
-                MouseButton::MBtn(x, y)     => {
-                    simulate_mouse_mbtn_press(*x, *y);
-                    simulate_mouse_mbtn_release(*x, *y)
-                }
-            }
-        }
-    }
-
-    static mut GLOBAL_CALLBACK: Option<Box<dyn FnMut(SystemInputEvent)>> = None;
-    static mut HOOK: HHOOK = null_mut();
-
-    extern "system" fn raw_callback(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
-        if code >= 0 {
-            match w_param as DWORD {
-                // --- keyboard event ---
-                WM_KEYDOWN => {
-                    let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
-                    let key_code = KeyCode::from_int(kb_struct.vkCode);
-                    //println!("(1)Key pressed :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
-                    //println!("(2)Key pressed :: code: {:?}({}), flags: {}, scan_code: {}, time: {}, extra_info: {}", key_code, kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
-                    match key_code {
-                        KeyCode::UnicodePrefix => {}
-                        _ => {
-                            #[allow(static_mut_refs)]
-                            unsafe {
-                                if let Some(cb) = &mut GLOBAL_CALLBACK {
-                                    cb(SystemInputEvent::KeyCode(key_code, ButtonState::Press));
-                                } else {
-                                    println!("Pressed: {:?}", key_code);
-                                }
-                            }
-                        }
-                    }
-                }
-                WM_KEYUP => {
-                    let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
-                    let key_code = KeyCode::from_int(kb_struct.vkCode);
-                    //println!("(1)Key released :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
-                    //println!("(2)Key released :: code: {:?}({}), flags: {}, scan_code: {}, time: {}, extra_info: {}", key_code, kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
-                    match key_code {
-                        KeyCode::UnicodePrefix => {}
-                        _ => {
-                            #[allow(static_mut_refs)]
-                            unsafe {
-                                if let Some(cb) = &mut GLOBAL_CALLBACK {
-                                    cb(SystemInputEvent::KeyCode(key_code, ButtonState::Release));
-                                } else {
-                                    println!("Release: {:?}", key_code);
-                                }
-                            }
-                        }
-                    }
-                }
-                // --- mouse event ---
-                WM_MOUSEMOVE => {
-                    let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
-                    let POINT { x, y } = mouse_info.pt;
-                    // println!("Mouse moved to: ({}, {})", x, y);
-                    let move_event = MouseAction::Move(x, y);
-                    #[allow(static_mut_refs)]
-                    unsafe {
-                        if let Some(cb) = &mut GLOBAL_CALLBACK {
-                            cb(SystemInputEvent::MouseAction(move_event));
-                        } else {
-                            println!("Mouse moved to: ({:?})", move_event);
-                        }
-                    }
-                }
-                WM_LBUTTONDOWN => {
-                    let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
-                    //println!("Left button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                    let lbtn_press = MouseButton::LBtn(mouse_info.pt.x, mouse_info.pt.y);
-                    #[allow(static_mut_refs)]
-                    unsafe {
-                        if let Some(cb) = &mut GLOBAL_CALLBACK {
-                            cb(SystemInputEvent::MouseButton(lbtn_press, ButtonState::Press));
-                        } else {
-                            println!("Pressed: {:?}", lbtn_press);
-                        }
-                    }
-                }
-                WM_LBUTTONUP => {
-                    let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
-                    //println!("Left button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                    let lbtn_release = MouseButton::LBtn(mouse_info.pt.x, mouse_info.pt.y);
-                    #[allow(static_mut_refs)]
-                    unsafe {
-                        if let Some(cb) = &mut GLOBAL_CALLBACK {
-                            cb(SystemInputEvent::MouseButton(lbtn_release, ButtonState::Release));
-                        } else {
-                            println!("Releaseed: {:?}", lbtn_release);
-                        }
-                    }
-                }
-                WM_RBUTTONDOWN => {
-                    let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
-                    //println!("Right button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                    let rbtn_press = MouseButton::RBtn(mouse_info.pt.x, mouse_info.pt.y);
-                    #[allow(static_mut_refs)]
-                    unsafe {
-                        if let Some(cb) = &mut GLOBAL_CALLBACK {
-                            cb(SystemInputEvent::MouseButton(rbtn_press, ButtonState::Press));
-                        } else {
-                            println!("Pressed: {:?}", rbtn_press);
-                        }
-                    }
-                }
-                WM_RBUTTONUP => {
-                    let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
-                    //println!("Right button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                    let rbtn_release = MouseButton::RBtn(mouse_info.pt.x, mouse_info.pt.y);
-                    #[allow(static_mut_refs)]
-                    unsafe {
-                        if let Some(cb) = &mut GLOBAL_CALLBACK {
-                            cb(SystemInputEvent::MouseButton(rbtn_release, ButtonState::Release));
-                        } else {
-                            println!("Releaseed: {:?}", rbtn_release);
-                        }
-                    }
-                }
-                WM_MBUTTONDOWN => {
-                    let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
-                    //println!("Middle button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                    let mbtn_press = MouseButton::MBtn(mouse_info.pt.x, mouse_info.pt.y);
-                    #[allow(static_mut_refs)]
-                    unsafe {
-                        if let Some(cb) = &mut GLOBAL_CALLBACK {
-                            cb(SystemInputEvent::MouseButton(mbtn_press, ButtonState::Press));
-                        } else {
-                            println!("Pressed: {:?}", mbtn_press);
-                        }
-                    }
-                }
-                WM_MBUTTONUP => {
-                    let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
-                    //println!("Middle button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                    let mbtn_release = MouseButton::MBtn(mouse_info.pt.x, mouse_info.pt.y);
-                    #[allow(static_mut_refs)]
-                    unsafe {
-                        if let Some(cb) = &mut GLOBAL_CALLBACK {
-                            cb(SystemInputEvent::MouseButton(mbtn_release, ButtonState::Release));
-                        } else {
-                            println!("Releaseed: {:?}", mbtn_release);
-                        }
-                    }
-                }
-                WM_MOUSEWHEEL => {
-                    let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
-                    let delta = (mouse_info.mouseData >> 16) as i16;
-                    //if delta > 0 {
-                    //    println!("Mouse wheel scrolled up at: ({}, {}), delta: {}", mouse_info.pt.x, mouse_info.pt.y, delta);
-                    //} else {
-                    //    println!("Mouse wheel scrolled down at: ({}, {}), delta: {}", mouse_info.pt.x, mouse_info.pt.y, delta);
-                    //}
-                    let whell = MouseAction::Whell(mouse_info.pt.x, mouse_info.pt.y, delta);
-                    #[allow(static_mut_refs)]
-                    unsafe {
-                        if let Some(cb) = &mut GLOBAL_CALLBACK {
-                            cb(SystemInputEvent::MouseAction(whell));
-                        } else {
-                            println!("{:?}", whell);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-        unsafe { CallNextHookEx(HOOK, code, w_param, l_param) }
-    }
-
-    #[allow(dead_code)]
-    #[derive(Debug)]
-    pub enum SystemInputEvent {
-        KeyCode(KeyCode, ButtonState),
-        MouseAction(MouseAction),
-        MouseButton(MouseButton, ButtonState),
-        Delay,
-    }
-    impl SystemInputEvent {
-        pub fn listen_keyboard_event() {
-            unsafe {
-                let h_instance = GetModuleHandleW(null_mut());
-                HOOK = SetWindowsHookExW(
-                    WH_KEYBOARD_LL,
-                    Some(raw_callback),
-                    h_instance,
-                    0,
-                );
-
-                if HOOK.is_null() {
-                    println!("Failed to set hook");
-                    return;
-                }
-
-                let mut msg = std::mem::zeroed();
-                while GetMessageW(&mut msg, null_mut(), 0, 0) != 0 {}
-                UnhookWindowsHookEx(HOOK);
-            }
-        }
-        pub fn listen_mouse_event() {
-            unsafe {
-                let h_instance = GetModuleHandleW(null_mut());
-                HOOK = SetWindowsHookExW(
-                    WH_MOUSE_LL,
-                    Some(raw_callback),
-                    h_instance,
-                    0,
-                );
-
-                if HOOK.is_null() {
-                    println!("Failed to set hook");
-                    return;
-                }
-
-                let mut msg = std::mem::zeroed();
-                while GetMessageW(&mut msg, null_mut(), 0, 0) != 0 {}
-                UnhookWindowsHookEx(HOOK);
-            }
-        }
-        pub fn listen_all<T>(mut cb: T) where T: FnMut(SystemInputEvent) + 'static {
-            use std::thread;
-
-            unsafe {
-                GLOBAL_CALLBACK = Some(Box::new(move |event| {
-                    cb(event);
-                }));
-            }
-
-            let handle01 = thread::spawn(|| {
-                SystemInputEvent::listen_keyboard_event();
-            });
-            let handle02 = thread::spawn(|| {
-                SystemInputEvent::listen_mouse_event();
-            });
-            handle01.join().unwrap(); // 等待執行緒結束
-            handle02.join().unwrap(); // 等待執行緒結束
-        }
-    }
-
-    // 貼上
-    #[allow(dead_code)]
-    pub fn past_text<S: AsRef<str>>(msg: S) {
-        let msg = String::from(msg.as_ref());
-        // 剪貼簿 library
-        extern crate clipboard;
-        use clipboard::ClipboardProvider;
-        use clipboard::ClipboardContext;
-
-        // 將文字放倒剪貼簿中
-        let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-        ctx.set_contents(msg).unwrap();
-
-        // 模擬按下 Ctrl + V (貼上)
-        KeyCode::ControlLeft.press();
-        KeyCode::KeyV.press();
-        KeyCode::KeyV.release();
-        KeyCode::ControlLeft.release();
-    }
+    struct KeyCodeDetail { code: u32, flags: u32, scan_code: u32 }
 
     // --- commons ---
     // 休息
@@ -1053,196 +919,7 @@ mod libs {
     }
 }
 
-mod pc_ctrl {
-    use crate::libs;
-
-    // --- 狀態 ---
-    pub enum State {
-        Waiting,
-        Hello,
-    }
-
-    // --- 狀態介面 ---
-    #[allow(dead_code)]
-    trait Action {
-        fn enter(&mut self) {}
-        fn out(&mut self) {}
-
-        // --- 系統觸發介面 ---
-        // 若動作狀態需要進行狀態轉移時, 則在此回傳新的狀態, 由 Context 接手處理 狀態轉移
-        #[allow(unused_variables)]
-        fn do_event(&mut self, event: libs::SystemInputEvent) -> Option<State> { None }
-    }
-
-    // --- 狀態實作 ---
-    // 等待狀態
-    struct ActionWaiting { flag1: bool }
-    impl Default for ActionWaiting {
-        fn default() -> ActionWaiting {
-            ActionWaiting {
-                flag1: false,
-            }
-        }
-    }
-    impl Action for ActionWaiting {
-        fn enter(&mut self) {
-            self.flag1 = false;
-        }
-
-        fn do_event(&mut self, event: libs::SystemInputEvent) -> Option<State> {
-            match event {
-                libs::SystemInputEvent::KeyCode(key_code, btn_state) => {
-                    match btn_state {
-                        libs::ButtonState::Release => {
-                            match key_code {
-                                libs::KeyCode::ControlRight => {
-                                    if !self.flag1 {
-                                        // --- test code ---
-                                        // libs::sleep(50);
-                                        // libs::KeyCode::Return.click();
-                                        // libs::sleep(50);
-                                        // println!("test1 ...");
-                                        // libs::exit();
-
-                                        self.flag1 = true;
-                                        libs::MouseButton::LBtn(925, 470).click();
-                                        libs::sleep(50);
-                                        libs::KeyCode::Return.click();
-                                        libs::sleep(50);
-                                        libs::past_text("請選擇 - h:hello, m: 取得鼠位置, q:退出 :: ");
-                                    }
-                                }
-                                libs::KeyCode::KeyH => {
-                                    if self.flag1 {
-                                        libs::KeyCode::End.click();
-                                        libs::sleep(100);
-                                        libs::KeyCode::ShiftLeft.press();
-                                        libs::sleep(100);
-                                        libs::KeyCode::Home.click();
-                                        libs::sleep(100);
-                                        libs::KeyCode::ShiftLeft.release();
-                                        libs::sleep(100);
-                                        libs::KeyCode::Backspace.click();
-                                        libs::sleep(100);
-                                        //libs::KeyCode::Return.click();
-
-                                        return Some(State::Hello);
-                                    }
-                                }
-                                libs::KeyCode::KeyM => {
-                                    if self.flag1 {
-                                        libs::KeyCode::End.click();
-                                        libs::sleep(100);
-                                        libs::KeyCode::ShiftLeft.press();
-                                        libs::sleep(100);
-                                        libs::KeyCode::Home.click();
-                                        libs::sleep(100);
-                                        libs::KeyCode::ShiftLeft.release();
-                                        libs::sleep(100);
-                                        libs::KeyCode::Backspace.click();
-                                        libs::sleep(100);
-                                        let (x, y) = libs::MouseAction::get_mouse_position();
-                                        libs::past_text(format!("當前滑鼠位置為 x: {}, y: {}", x, y));
-
-                                        libs::exit();
-                                    }
-                                }
-                                libs::KeyCode::KeyQ => {
-                                    if self.flag1 {
-                                        libs::KeyCode::End.click();
-                                        libs::sleep(100);
-                                        libs::KeyCode::ShiftLeft.press();
-                                        libs::sleep(100);
-                                        libs::KeyCode::Home.click();
-                                        libs::sleep(100);
-                                        libs::KeyCode::ShiftLeft.release();
-                                        libs::sleep(100);
-                                        libs::KeyCode::Backspace.click();
-                                        libs::sleep(100);
-                                        libs::past_text("程式已退出");
-
-                                        libs::exit();
-                                    }
-                                }
-                                _ => {}
-                            }
-                        }
-                        libs::ButtonState::Press => {}
-                    }
-                }
-                _ => {}
-            }
-            None
-        }
-    }
-
-    // 測試狀態
-    struct ActionHello;
-    impl Action for ActionHello {
-        #[allow(unused_variables)]
-        fn enter(&mut self) {
-            //libs::KeyCode::Return.click();
-            libs::sleep(50);
-            libs::past_text("Hello 測試狀態 !!!");
-            libs::exit();
-        }
-    }
-
-    // --- 事件觸發介面, 保留各種狀態的實體 ---
-    pub struct Context {
-        current_s: State,
-
-        action_waiting: ActionWaiting,
-        action_hello: ActionHello,
-    }
-    impl Default for Context {
-        fn default() -> Context {
-            // Action 僅在此初始化一次
-            Context {
-                current_s: State::Waiting,
-                action_waiting: ActionWaiting{..Default::default()},
-                action_hello: ActionHello{},
-            }
-        }
-    }
-    impl Context {
-        fn action_mapping(&mut self) -> &mut dyn Action {
-            match self.current_s {
-                State::Waiting => {
-                    return &mut (self.action_waiting);
-                }
-                State::Hello => {
-                    return &mut (self.action_hello);
-                }
-            }
-        }
-
-        fn change_state_if(&mut self, state_opt: Option<State>) {
-            if let Some(state) = state_opt {
-                let action1 = self.action_mapping();
-                action1.out();
-                self.current_s = state;
-                let action2 = self.action_mapping();
-                action2.enter();
-            }
-        }
-
-        // --- event 轉發到 Action 中處理 ---
-        pub fn do_event(&mut self, event: libs::SystemInputEvent) {
-            let state = self.action_mapping().do_event(event);
-            self.change_state_if(state);
-        }
-    }
-}
-
-fn start_event01() {
-    let mut ctx: pc_ctrl::Context = Default::default();
-    libs::SystemInputEvent::listen_all(move |event| {
-        //println!("{:?}", event);
-        ctx.do_event(event);
-    });
-}
-
 fn main() {
-    start_event01();
+    //libs::listen_keyboard_event();
+    //libs::listen_mouse_event();
 }
