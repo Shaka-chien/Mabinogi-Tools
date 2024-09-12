@@ -414,6 +414,7 @@ mod libs {
         }
     }
 
+    #[allow(dead_code)]
     #[derive(Debug)]
     pub enum MouseEvent {
         Move { x: i32, y: i32 },
@@ -442,11 +443,12 @@ mod libs {
         pub fn click() {
             let (x, y) = get_mouse_position();
             simulate_mouse_lbtn_press(x, y);
-            sleep(50);
+            sleep(20);
             simulate_mouse_lbtn_release(x, y);
         }
     }
 
+    #[allow(dead_code)]
     #[derive(Debug)]
     pub enum ButtonAction {
         Down, Up
@@ -928,7 +930,7 @@ mod libs {
             let flags_ext = self.flags_ext();
             let scan_code = self.scan_code();
             simulate_key_press(code, flags_ext, scan_code);
-            sleep(50);
+            sleep(20);
             simulate_key_release(code, flags_ext, scan_code);
         }
     }
@@ -944,6 +946,36 @@ mod libs {
         Keyboard(ButtonAction, KeyCode),
     }
 
+    // --- 剪貼簿 ---
+    #[allow(dead_code)]
+    pub fn cp_text_line_to_end() -> String {
+        // 剪貼簿 library
+        extern crate clipboard;
+        use clipboard::ClipboardProvider;
+        use clipboard::ClipboardContext;
+
+        // 模擬按下 Shift + End, Ctrl + C
+        KeyCode::ShiftLeft.down();
+        sleep(20);
+        KeyCode::End.click();
+        sleep(20);
+        KeyCode::ShiftLeft.up();
+        sleep(20);
+        KeyCode::ControlLeft.down();
+        sleep(20);
+        KeyCode::KeyC.click();
+        sleep(20);
+        KeyCode::ControlLeft.up();
+        sleep(20);
+        KeyCode::LeftArrow.click();
+
+        // 將文字從 剪貼簿中 copy 出來
+        let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+        match ctx.get_contents() {
+            Ok(s) => {s},
+            Err(_e) => {String::from("")},
+        }
+    }
     // 貼上
     #[allow(dead_code)]
     pub fn past_text<S: AsRef<str>>(msg: S) {
@@ -959,8 +991,9 @@ mod libs {
 
         // 模擬按下 Ctrl + V (貼上)
         KeyCode::ControlLeft.down();
-        KeyCode::KeyV.down();
-        KeyCode::KeyV.up();
+        sleep(20);
+        KeyCode::KeyV.click();
+        sleep(20);
         KeyCode::ControlLeft.up();
     }
 
@@ -1266,6 +1299,7 @@ mod ctrl {
     }
 
     // --- 啟動 (listen 系統狀態) ---
+    #[allow(dead_code)]
     pub fn listen() {
         let mut ctx = Context::new();
         unsafe {
@@ -1290,4 +1324,9 @@ fn main() {
     //libs::listen_mouse_event();
     
     ctrl::listen();
+
+    //println!("3秒後copy to end");
+    //libs::sleep(3000);
+    //let s = libs::cp_text_line_to_end();
+    //println!("{s}");
 }
