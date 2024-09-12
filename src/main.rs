@@ -1308,6 +1308,9 @@ mod ctrl {
                 ctx.event_callback(event);
             }));
         }
+        // 可能不需要 thread
+        // 兩個 fn listen_keyboard_event, listen_mouse_event 都在以下地方 停住
+        // `while GetMessageW(&mut msg, null_mut(), 0, 0) != 0 {}`
         let handle01 = thread::spawn(|| {
             libs::listen_keyboard_event();
         });
