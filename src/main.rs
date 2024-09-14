@@ -5,12 +5,12 @@ mod libs {
         KEYEVENTF_KEYUP, MOUSEEVENTF_MOVE, MOUSEEVENTF_ABSOLUTE, 
         MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_WHEEL,
         GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN,
-        SetWindowsHookExW, CallNextHookEx, UnhookWindowsHookEx, GetMessageW, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, KBDLLHOOKSTRUCT,
+        SetWindowsHookExW, CallNextHookEx, UnhookWindowsHookEx, GetMessageW, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP, KBDLLHOOKSTRUCT,
         WH_MOUSE_LL, WM_MOUSEMOVE, WM_LBUTTONDOWN, WM_RBUTTONDOWN, WM_LBUTTONUP,
         WM_RBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEWHEEL, MSLLHOOKSTRUCT,
         GetCursorPos,
-    }; // KEYBDINPUT, MOUSEINPUT, KEYEVENTF_SCANCODE, keybd_event,
-    use winapi::shared::minwindef::{DWORD, LRESULT, WPARAM, LPARAM}; // UINT
+    };
+    use winapi::shared::minwindef::{DWORD, LRESULT, WPARAM, LPARAM};
     use std::mem::size_of;
 
     use std::ptr::null_mut;
@@ -222,9 +222,11 @@ mod libs {
         static mut HOOK: HHOOK = null_mut();
         extern "system" fn raw_callback(code: i32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
             if code >= 0 {
+                // https://learn.microsoft.com/zh-tw/windows/win32/inputdev/keyboard-input
+                // println!("DWORD: {}", w_param as DWORD);
                 match w_param as DWORD {
                     // --- keyboard event ---
-                    WM_KEYDOWN => {
+                    WM_KEYDOWN | WM_SYSKEYDOWN => {
                         let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
                         let key_code = KeyCode::from_code(kb_struct.vkCode);
                         let detail = KeyCodeDetail { code: kb_struct.vkCode, flags: kb_struct.flags, scan_code: kb_struct.scanCode};
@@ -238,7 +240,7 @@ mod libs {
                             }
                         }
                     }
-                    WM_KEYUP => {
+                    WM_KEYUP | WM_SYSKEYUP => {
                         let kb_struct = unsafe { &*(l_param as *const KBDLLHOOKSTRUCT) };
                         let key_code = KeyCode::from_code(kb_struct.vkCode);
                         let detail = KeyCodeDetail { code: kb_struct.vkCode, flags: kb_struct.flags, scan_code: kb_struct.scanCode};
@@ -1323,10 +1325,10 @@ mod ctrl {
 }
 
 fn main() {
-    //libs::listen_keyboard_event();
+    libs::listen_keyboard_event();
     //libs::listen_mouse_event();
     
-    ctrl::listen();
+    //ctrl::listen();
 
     //println!("3秒後copy to end");
     //libs::sleep(3000);
