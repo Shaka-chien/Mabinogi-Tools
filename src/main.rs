@@ -216,7 +216,7 @@ mod libs {
         }
     }
 
-    pub static mut EVENT_CALLBACK: Option<Box<dyn FnMut(Event)>> = None;
+    pub static mut EVENT_CALLBACK: Option<Box<dyn FnMut(Event) -> Option<isize>>> = None;
 
     pub fn listen_keyboard_event() {
         static mut HOOK: HHOOK = null_mut();
@@ -233,7 +233,10 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Keyboard(ButtonAction::Down, key_code));
+                                let cb_rtn = cb(Event::Keyboard(ButtonAction::Down, key_code));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Key pressed :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
                                 println!("{:?} {:?} {:?}", key_code, detail, ButtonAction::Down);
@@ -247,7 +250,10 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Keyboard(ButtonAction::Up, key_code));
+                                let cb_rtn = cb(Event::Keyboard(ButtonAction::Up, key_code));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Key released :: code: {}, flags: {}, scan_code: {}, time: {}, extra_info: {}", kb_struct.vkCode, kb_struct.flags, kb_struct.scanCode, kb_struct.time, kb_struct.dwExtraInfo);
                                 println!("{:?} {:?} {:?}", key_code, detail, ButtonAction::Up);
@@ -288,91 +294,119 @@ mod libs {
                     WM_MOUSEMOVE => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::Move{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        let detail = MouseCodeDetail { mouse_data: mouse_info.mouseData, flags: mouse_info.flags };
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Mouse moved to: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                                println!("{:?}", event);
+                                println!("{:?} {:?}", event, detail);
                             }
                         }
                     }
                     WM_LBUTTONDOWN => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::LBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        let detail = MouseCodeDetail { mouse_data: mouse_info.mouseData, flags: mouse_info.flags };
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Left button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                                println!("{:?}", event);
+                                println!("{:?} {:?}", event, detail);
                             }
                         }
                     }
                     WM_LBUTTONUP => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::LBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        let detail = MouseCodeDetail { mouse_data: mouse_info.mouseData, flags: mouse_info.flags };
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Left button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                                println!("{:?}", event);
+                                println!("{:?} {:?}", event, detail);
                             }
                         }
                     }
                     WM_RBUTTONDOWN => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::RBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        let detail = MouseCodeDetail { mouse_data: mouse_info.mouseData, flags: mouse_info.flags };
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Right button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                                println!("{:?}", event);
+                                println!("{:?} {:?}", event, detail);
                             }
                         }
                     }
                     WM_RBUTTONUP => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::RBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        let detail = MouseCodeDetail { mouse_data: mouse_info.mouseData, flags: mouse_info.flags };
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Right button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                                println!("{:?}", event);
+                                println!("{:?} {:?}", event, detail);
                             }
                         }
                     }
                     WM_MBUTTONDOWN => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::MBtnDown{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        let detail = MouseCodeDetail { mouse_data: mouse_info.mouseData, flags: mouse_info.flags };
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Middle button down at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                                println!("{:?}", event);
+                                println!("{:?} {:?}", event, detail);
                             }
                         }
                     }
                     WM_MBUTTONUP => {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let event = MouseEvent::MBtnUp{x: mouse_info.pt.x, y: mouse_info.pt.y};
+                        let detail = MouseCodeDetail { mouse_data: mouse_info.mouseData, flags: mouse_info.flags };
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //println!("Middle button up at: ({}, {})", mouse_info.pt.x, mouse_info.pt.y);
-                                println!("{:?}", event);
+                                println!("{:?} {:?}", event, detail);
                             }
                         }
                     }
@@ -380,14 +414,18 @@ mod libs {
                         let mouse_info = unsafe { &*(l_param as *const MSLLHOOKSTRUCT) };
                         let delta = (mouse_info.mouseData >> 16) as i16;
                         let event = MouseEvent::Whell{x: mouse_info.pt.x, y: mouse_info.pt.y, delta};
+                        let detail = MouseCodeDetail { mouse_data: mouse_info.mouseData, flags: mouse_info.flags };
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event));
+                                if let Some(rtn_code) = cb_rtn {
+                                    return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
+                                }
                             } else {
                                 //let up_down = if delta > 0 { "up" } else { "down" };
                                 //println!("Mouse wheel scrolled {} at: ({}, {}), delta: {}", up_down, mouse_info.pt.x, mouse_info.pt.y, delta);
-                                println!("{:?}", event);
+                                println!("{:?} {:?}", event, detail);
                             }
                         }
                     }
@@ -939,7 +977,11 @@ mod libs {
 
     #[allow(dead_code)]
     #[derive(Debug)]
-    pub struct KeyCodeDetail { code: u32, flags: u32, scan_code: u32 }
+    pub struct KeyCodeDetail { code: u32, scan_code: u32, flags: u32 }
+
+    #[allow(dead_code)]
+    #[derive(Debug)]
+    pub struct MouseCodeDetail { mouse_data: u32, flags: u32 }
 
     #[allow(dead_code)]
     #[derive(Debug)]
@@ -1044,6 +1086,11 @@ mod ctrl {
         },
     };
 
+    #[allow(dead_code)]
+    pub enum EventHandleReturn {
+        CONTINUE, INTERCEPT
+    }
+
     // --- 狀態 ---
     #[allow(dead_code)]
     pub trait State {
@@ -1051,7 +1098,7 @@ mod ctrl {
         fn out(self: Rc<Self>) {}
 
         #[allow(unused_variables)]
-        fn do_event(self: Rc<Self>, event: libs::Event) -> Rc<dyn State> {
+        fn do_event(self: Rc<Self>, event: libs::Event) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
                 libs::Event::Mouse(event) => {
                     self.do_mouse_event(event)
@@ -1066,13 +1113,13 @@ mod ctrl {
         }
 
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State>;
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn);
 
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State>;
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn);
 
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State>;
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn);
     }
 
     // --- 等待(入口) ---
@@ -1098,11 +1145,11 @@ mod ctrl {
             libs::sleep(100);
         }
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> { self.clone() }
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> {
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
                 libs::KeyCode::ControlRight => {
                     if !self.flag.get() {
@@ -1115,22 +1162,22 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyM => {
                     if self.flag.get() {
-                        return Rc::new(MousePositionState::new());
+                        return (Rc::new(MousePositionState::new()), EventHandleReturn::CONTINUE);
                     }
                 }
                 libs::KeyCode::KeyC => {
                     if self.flag.get() {
-                        return Rc::new(MouseClicksState::new());
+                        return (Rc::new(MouseClicksState::new()), EventHandleReturn::CONTINUE);
                     }
                 }
                 libs::KeyCode::KeyQ => {
                     if self.flag.get() {
-                        return Rc::new(ExitState::new());
+                        return (Rc::new(ExitState::new()), EventHandleReturn::CONTINUE);
                     }
                 }
                 _ => { }
             }
-            self.clone()
+            (self.clone(), EventHandleReturn::CONTINUE)
         }
     }
 
@@ -1158,18 +1205,18 @@ mod ctrl {
             libs::KeyCode::Return.click();
         }
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> { self.clone() }
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> {
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
                 libs::KeyCode::Escape => {
-                    return Rc::new(WaitingState::new());
+                    return (Rc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
                 }
                 _ => { }
             }
-            self.clone()
+            (self.clone(), EventHandleReturn::CONTINUE)
         }
     }
 
@@ -1223,7 +1270,7 @@ mod ctrl {
             libs::KeyCode::Return.click();
         }
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> {
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
                 libs::MouseEvent::RBtnDown { x, y } => {
                     self.r_mouse_btn.store(true, Ordering::Relaxed);
@@ -1233,19 +1280,19 @@ mod ctrl {
                 }
                 _ => {}
             }
-            self.clone()
+            (self.clone(), EventHandleReturn::CONTINUE)
         }
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> {
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
                 libs::KeyCode::Escape => {
                     self.alive.store(false, Ordering::Relaxed);
                     self.handle
                         .take().expect("Called stop on non-running thread")
                         .join().expect("Could not join spawned thread");
-                    return Rc::new(WaitingState::new());
+                    return (Rc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
                 }
                 libs::KeyCode::ShiftLeft => {
                     if self.alive.load(Ordering::Relaxed) {
@@ -1255,7 +1302,7 @@ mod ctrl {
                 }
                 _ => { }
             }
-            self.clone()
+            (self.clone(), EventHandleReturn::CONTINUE)
         }
     }
 
@@ -1270,11 +1317,11 @@ mod ctrl {
             libs::exit();
         }
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> { self.clone() }
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> { self.clone() }
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
     }
 
     // --- Context ---
@@ -1285,10 +1332,14 @@ mod ctrl {
             init_state.clone().enter();
             Context { state: init_state.clone() }
         }
-        pub fn event_callback(&mut self, event: libs::Event) {
+        pub fn event_callback(&mut self, event: libs::Event) -> Option<isize> {
             let state = Rc::clone(&self.state);
-            let next_state = state.do_event(event);
+            let (next_state, evt_hdl_rtn) = state.do_event(event);
             self.state_change(next_state);
+            match evt_hdl_rtn {
+                EventHandleReturn::INTERCEPT => { Some(1) } // 欄截系統事件, 不向程式發送
+                EventHandleReturn::CONTINUE => { None }
+            }
         }
         fn state_change(&mut self, next_state: Rc<dyn State>) {
             if !Rc::ptr_eq(&self.state, &next_state) {
@@ -1307,7 +1358,7 @@ mod ctrl {
         unsafe {
             libs::EVENT_CALLBACK = Some(Box::new(move |event| {
                 //println!("{:?}", event);
-                ctx.event_callback(event);
+                ctx.event_callback(event)
             }));
         }
         // 可能不需要 thread
@@ -1325,10 +1376,10 @@ mod ctrl {
 }
 
 fn main() {
-    libs::listen_keyboard_event();
+    //libs::listen_keyboard_event();
     //libs::listen_mouse_event();
     
-    //ctrl::listen();
+    ctrl::listen();
 
     //println!("3秒後copy to end");
     //libs::sleep(3000);
