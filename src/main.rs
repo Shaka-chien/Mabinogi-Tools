@@ -1191,12 +1191,12 @@ mod ctrl {
         fn enter(self: Rc<Self>) {
             let alive = self.alive.clone();
             let r_mouse_btn = self.r_mouse_btn.clone();
-            if !alive.load(Ordering::SeqCst) {
+            if !alive.load(Ordering::Relaxed) {
                 libs::past_text(format!("滑鼠連點啟動中, esc 回到 WaitingState"));
-                self.alive.store(true, Ordering::SeqCst);
+                self.alive.store(true, Ordering::Relaxed);
                 self.handle.set(Some(thread::spawn(move || {
-                    while alive.load(Ordering::SeqCst) {
-                        if !r_mouse_btn.load(Ordering::SeqCst) {
+                    while alive.load(Ordering::Relaxed) {
+                        if !r_mouse_btn.load(Ordering::Relaxed) {
                             libs::MouseEvent::click();
                         }
                         libs::sleep(200);
@@ -1224,10 +1224,10 @@ mod ctrl {
         fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> Rc<dyn State> {
             match event {
                 libs::MouseEvent::RBtnDown { x, y } => {
-                    self.r_mouse_btn.store(true, Ordering::SeqCst);
+                    self.r_mouse_btn.store(true, Ordering::Relaxed);
                 }
                 libs::MouseEvent::RBtnUp { x, y } => {
-                    self.r_mouse_btn.store(false, Ordering::SeqCst);
+                    self.r_mouse_btn.store(false, Ordering::Relaxed);
                 }
                 _ => {}
             }
@@ -1239,14 +1239,14 @@ mod ctrl {
         fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> Rc<dyn State> {
             match event {
                 libs::KeyCode::Escape => {
-                    self.alive.store(false, Ordering::SeqCst);
+                    self.alive.store(false, Ordering::Relaxed);
                     self.handle
                         .take().expect("Called stop on non-running thread")
                         .join().expect("Could not join spawned thread");
                     return Rc::new(WaitingState::new());
                 }
                 libs::KeyCode::ShiftLeft => {
-                    if self.alive.load(Ordering::SeqCst) {
+                    if self.alive.load(Ordering::Relaxed) {
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                     }
