@@ -233,7 +233,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Keyboard(ButtonAction::Down, key_code));
+                                let cb_rtn = cb(Event::Keyboard(key_code, ButtonAction::Down, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -250,7 +250,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Keyboard(ButtonAction::Up, key_code));
+                                let cb_rtn = cb(Event::Keyboard(key_code, ButtonAction::Up, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -298,7 +298,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -315,7 +315,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -332,7 +332,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -349,7 +349,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -366,7 +366,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -383,7 +383,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -400,7 +400,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -418,7 +418,7 @@ mod libs {
                         #[allow(static_mut_refs)]
                         unsafe {
                             if let Some(cb) = &mut EVENT_CALLBACK {
-                                let cb_rtn = cb(Event::Mouse(event));
+                                let cb_rtn = cb(Event::Mouse(event, detail));
                                 if let Some(rtn_code) = cb_rtn {
                                     return rtn_code; // 這裡回傳 1 會欄截系統事件, 不向程式發送
                                 }
@@ -977,17 +977,17 @@ mod libs {
 
     #[allow(dead_code)]
     #[derive(Debug)]
-    pub struct KeyCodeDetail { code: u32, scan_code: u32, flags: u32 }
+    pub struct KeyCodeDetail { pub code: u32, pub scan_code: u32, pub flags: u32 }
 
     #[allow(dead_code)]
     #[derive(Debug)]
-    pub struct MouseCodeDetail { mouse_data: u32, flags: u32 }
+    pub struct MouseCodeDetail { pub mouse_data: u32, pub flags: u32 }
 
     #[allow(dead_code)]
     #[derive(Debug)]
     pub enum Event {
-        Mouse(MouseEvent),
-        Keyboard(ButtonAction, KeyCode),
+        Mouse(MouseEvent, MouseCodeDetail),
+        Keyboard(KeyCode, ButtonAction, KeyCodeDetail),
     }
 
     // --- 剪貼簿 ---
@@ -1097,13 +1097,24 @@ mod ctrl {
         fn enter(self: Rc<Self>) {}
         fn out(self: Rc<Self>) {}
 
+        fn mute_event_when_simulate(self: Rc<Self>) -> bool { true }
+        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn);
+
         #[allow(unused_variables)]
         fn do_event(self: Rc<Self>, event: libs::Event) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
-                libs::Event::Mouse(event) => {
+                libs::Event::Mouse(event, detail) => {
+                    let mouse_simulate_mask = 1;
+                    if self.clone().mute_event_when_simulate() && (detail.flags & mouse_simulate_mask) == mouse_simulate_mask {
+                        return self.do_event_when_mute();
+                    }
                     self.do_mouse_event(event)
                 }
-                libs::Event::Keyboard(act, event) => {
+                libs::Event::Keyboard(event, act, detail) => {
+                    let keyboard_simulate_mask = 0x10;
+                    if self.clone().mute_event_when_simulate() && (detail.flags & keyboard_simulate_mask) == keyboard_simulate_mask {
+                        return self.do_event_when_mute();
+                    }
                     match act {
                         libs::ButtonAction::Down => { self.do_keyboard_down(event) }
                         libs::ButtonAction::Up => { self.do_keyboard_up(event) }
@@ -1113,13 +1124,13 @@ mod ctrl {
         }
 
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn);
+        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
 
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn);
+        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
 
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn);
+        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
     }
 
     // --- 等待(入口) ---
@@ -1144,10 +1155,7 @@ mod ctrl {
             libs::KeyCode::Backspace.click();
             libs::sleep(100);
         }
-        #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
-        #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
         fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
@@ -1204,10 +1212,7 @@ mod ctrl {
             libs::sleep(100);
             libs::KeyCode::Return.click();
         }
-        #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
-        #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
         fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
@@ -1269,6 +1274,7 @@ mod ctrl {
             libs::sleep(100);
             libs::KeyCode::Return.click();
         }
+        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
         fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
@@ -1282,8 +1288,6 @@ mod ctrl {
             }
             (self.clone(), EventHandleReturn::CONTINUE)
         }
-        #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
         fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
             match event {
@@ -1316,12 +1320,7 @@ mod ctrl {
             libs::past_text("程式已退出");
             libs::exit();
         }
-        #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
-        #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
-        #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
     }
 
     // --- Context ---
@@ -1373,6 +1372,45 @@ mod ctrl {
         handle01.join().unwrap(); // 等待執行緒結束
         handle02.join().unwrap(); // 等待執行緒結束
     }
+
+    #[allow(dead_code)]
+    pub fn test01_copy_to_end() {
+        //println!("3秒後copy to end");
+        //libs::sleep(3000);
+        //let s = libs::cp_text_line_to_end();
+        //println!("{s}");
+    }
+
+    #[allow(dead_code)]
+    pub fn test02_mask_testing() {
+        let simulate = 0x10;
+        let flag = 16;
+        println!("flag {} - {}", flag, (flag & simulate) == simulate);
+        let flag = 144;
+        println!("flag {} - {}", flag, (flag & simulate) == simulate);
+    }
+
+    #[allow(dead_code)]
+    pub fn test02_test_simulate_detail() {
+        let handle01 = thread::spawn(|| {
+            libs::listen_keyboard_event();
+        });
+        let handle02 = thread::spawn(|| {
+            libs::listen_mouse_event();
+        });
+
+        libs::sleep(500);
+        libs::KeyCode::KeyA.click();
+        libs::sleep(500);
+        libs::KeyCode::ControlLeft.click();
+        libs::sleep(500);
+        libs::KeyCode::Home.click();
+        libs::sleep(500);
+        libs::MouseEvent::click();
+
+        handle01.join().unwrap(); // 等待執行緒結束
+        handle02.join().unwrap(); // 等待執行緒結束
+    }
 }
 
 fn main() {
@@ -1380,9 +1418,7 @@ fn main() {
     //libs::listen_mouse_event();
     
     ctrl::listen();
-
-    //println!("3秒後copy to end");
-    //libs::sleep(3000);
-    //let s = libs::cp_text_line_to_end();
-    //println!("{s}");
+    //ctrl::test01_copy_to_end();
+    //ctrl::test02_mask_testing();
+    //ctrl::test02_test_simulate_detail();
 }
