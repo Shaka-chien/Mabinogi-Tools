@@ -1077,13 +1077,13 @@ mod libs {
 mod ctrl {
     use crate::libs;
     use std::{
-        rc::Rc,
         cell::Cell,
         sync,
         thread,
         sync::atomic::{
             AtomicBool, Ordering
         },
+        sync::Arc,
     };
 
     #[allow(dead_code)]
@@ -1094,14 +1094,14 @@ mod ctrl {
     // --- 狀態 ---
     #[allow(dead_code)]
     pub trait State {
-        fn enter(self: Rc<Self>) {}
-        fn out(self: Rc<Self>) {}
+        fn enter(self: Arc<Self>) {}
+        fn out(self: Arc<Self>) {}
 
-        fn mute_event_when_simulate(self: Rc<Self>) -> bool { true }
-        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn);
+        fn mute_event_when_simulate(self: Arc<Self>) -> bool { true }
+        fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn);
 
         #[allow(unused_variables)]
-        fn do_event(self: Rc<Self>, event: libs::Event) -> (Rc<dyn State>, EventHandleReturn) {
+        fn do_event(self: Arc<Self>, event: libs::Event) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 libs::Event::Mouse(event, detail) => {
                     let mouse_simulate_mask = 1;
@@ -1124,13 +1124,13 @@ mod ctrl {
         }
 
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
+        fn do_mouse_event(self: Arc<Self>, event: libs::MouseEvent) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
 
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
+        fn do_keyboard_down(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
 
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
+        fn do_keyboard_up(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
     }
 
     // --- 等待(入口) ---
@@ -1142,7 +1142,7 @@ mod ctrl {
         }
     }
     impl State for WaitingState {
-        fn out(self: Rc<Self>) {
+        fn out(self: Arc<Self>) {
             libs::sleep(200);
             libs::KeyCode::End.click();
             libs::sleep(100);
@@ -1155,9 +1155,9 @@ mod ctrl {
             libs::KeyCode::Backspace.click();
             libs::sleep(100);
         }
-        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_up(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 libs::KeyCode::ControlRight => {
                     if !self.flag.get() {
@@ -1170,17 +1170,17 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyM => {
                     if self.flag.get() {
-                        return (Rc::new(MousePositionState::new()), EventHandleReturn::CONTINUE);
+                        return (Arc::new(MousePositionState::new()), EventHandleReturn::CONTINUE);
                     }
                 }
                 libs::KeyCode::KeyC => {
                     if self.flag.get() {
-                        return (Rc::new(MouseClicksState::new()), EventHandleReturn::CONTINUE);
+                        return (Arc::new(MouseClicksState::new()), EventHandleReturn::CONTINUE);
                     }
                 }
                 libs::KeyCode::KeyQ => {
                     if self.flag.get() {
-                        return (Rc::new(ExitState::new()), EventHandleReturn::CONTINUE);
+                        return (Arc::new(ExitState::new()), EventHandleReturn::CONTINUE);
                     }
                 }
                 _ => { }
@@ -1195,11 +1195,11 @@ mod ctrl {
         fn new() -> MousePositionState { MousePositionState {} }
     }
     impl State for MousePositionState {
-        fn enter(self: Rc<Self>) {
+        fn enter(self: Arc<Self>) {
             let (x, y) = libs::MouseEvent::get_mouse_position();
             libs::past_text(format!("當前滑鼠位置為 x: {}, y: {}, esc 回到 WaitingState", x, y));
         }
-        fn out(self: Rc<Self>) {
+        fn out(self: Arc<Self>) {
             libs::KeyCode::End.click();
             libs::sleep(100);
             libs::KeyCode::ShiftLeft.down();
@@ -1212,12 +1212,12 @@ mod ctrl {
             libs::sleep(100);
             libs::KeyCode::Return.click();
         }
-        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_up(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 libs::KeyCode::Escape => {
-                    return (Rc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                    return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
                 }
                 _ => { }
             }
@@ -1242,7 +1242,7 @@ mod ctrl {
         }
     }
     impl State for MouseClicksState {
-        fn enter(self: Rc<Self>) {
+        fn enter(self: Arc<Self>) {
             let alive = self.alive.clone();
             let r_mouse_btn = self.r_mouse_btn.clone();
             if !alive.load(Ordering::Relaxed) {
@@ -1258,7 +1258,7 @@ mod ctrl {
                 })));
             }
         }
-        fn out(self: Rc<Self>) {
+        fn out(self: Arc<Self>) {
             libs::sleep(50);
             libs::KeyCode::Return.click();
             libs::sleep(100);
@@ -1274,9 +1274,9 @@ mod ctrl {
             libs::sleep(100);
             libs::KeyCode::Return.click();
         }
-        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Rc<Self>, event: libs::MouseEvent) -> (Rc<dyn State>, EventHandleReturn) {
+        fn do_mouse_event(self: Arc<Self>, event: libs::MouseEvent) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 libs::MouseEvent::RBtnDown { x, y } => {
                     self.r_mouse_btn.store(true, Ordering::Relaxed);
@@ -1289,14 +1289,14 @@ mod ctrl {
             (self.clone(), EventHandleReturn::CONTINUE)
         }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Rc<Self>, event: libs::KeyCode) -> (Rc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_up(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 libs::KeyCode::Escape => {
                     self.alive.store(false, Ordering::Relaxed);
                     self.handle
                         .take().expect("Called stop on non-running thread")
                         .join().expect("Could not join spawned thread");
-                    return (Rc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                    return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
                 }
                 libs::KeyCode::ShiftLeft => {
                     if self.alive.load(Ordering::Relaxed) {
@@ -1316,33 +1316,34 @@ mod ctrl {
         fn new() -> ExitState { ExitState {} }
     }
     impl State for ExitState {
-        fn enter(self: Rc<Self>) {
+        fn enter(self: Arc<Self>) {
             libs::past_text("程式已退出");
             libs::exit();
         }
-        fn do_event_when_mute(self: Rc<Self>) -> (Rc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
     }
 
     // --- Context ---
-    pub struct Context { state: Rc<dyn State> }
+    pub struct Context { state: Arc<dyn State> }
     impl Context {
         pub fn new() -> Context {
-            let init_state = Rc::new(WaitingState::new());
+            let init_state = Arc::new(WaitingState::new());
             init_state.clone().enter();
             Context { state: init_state.clone() }
         }
+        
         pub fn event_callback(&mut self, event: libs::Event) -> Option<isize> {
-            let state = Rc::clone(&self.state);
+            let state = Arc::clone(&self.state);
             let (next_state, evt_hdl_rtn) = state.do_event(event);
             self.state_change(next_state);
             match evt_hdl_rtn {
-                EventHandleReturn::INTERCEPT => { Some(1) } // 欄截系統事件, 不向程式發送
-                EventHandleReturn::CONTINUE => { None }
+                EventHandleReturn::INTERCEPT => Some(1), // 欄截系統事件, 不向程式發送
+                EventHandleReturn::CONTINUE => None,
             }
         }
-        fn state_change(&mut self, next_state: Rc<dyn State>) {
-            if !Rc::ptr_eq(&self.state, &next_state) {
-                // 發生 state 移轉
+    
+        fn state_change(&mut self, next_state: Arc<dyn State>) {
+            if !Arc::ptr_eq(&self.state, &next_state) {
                 self.state.clone().out();
                 self.state = next_state;
                 self.state.clone().enter();
