@@ -496,8 +496,8 @@ mod libs {
 
     #[derive(Debug)]
     pub enum KeyCode {
-        Alt,
-        AltGr,
+        Alt,   // left  alt
+        AltGr, // right alt
         Backspace,
         CapsLock,
         ControlLeft,
@@ -535,6 +535,8 @@ mod libs {
         Pause,
         NumLock,
         BackQuote,
+
+        // 數字1~0
         Num1,
         Num2,
         Num3,
@@ -583,6 +585,7 @@ mod libs {
         Dot,
         Slash,
         Insert,
+        //數字鍵盤
         KpMinus,
         KpPlus,
         KpMultiply,
@@ -598,6 +601,7 @@ mod libs {
         Kp8,
         Kp9,
         KpDelete,
+
         UnicodePrefix, // windows 字母前綴
         Unknow,
     }
@@ -1088,7 +1092,8 @@ mod ctrl {
 
     #[allow(dead_code)]
     pub enum EventHandleReturn {
-        CONTINUE, INTERCEPT
+        CONTINUE,  // 事件泡泡繼續傳遞
+        INTERCEPT, // 欄截系統事件, 不向程式發送
     }
 
     // --- 狀態 ---
@@ -1165,7 +1170,7 @@ mod ctrl {
                         libs::sleep(50);
                         libs::KeyCode::Return.click();
                         libs::sleep(50);
-                        libs::past_text("請選擇 - c: 滑鼠連點, m: 取得滑鼠位置, q:退出 :: ");
+                        libs::past_text("請選擇 - c: 滑鼠連點, m: 取得滑鼠位置, b: 戰鬥模式, x: 返回待命狀態, q:退出 :: ");
                     }
                 }
                 libs::KeyCode::KeyM => {
@@ -1178,9 +1183,31 @@ mod ctrl {
                         return (Arc::new(MouseClicksState::new()), EventHandleReturn::CONTINUE);
                     }
                 }
+                libs::KeyCode::KeyB => {
+                    if self.flag.get() {
+                        return (Arc::new(FingingState::new()), EventHandleReturn::CONTINUE);
+                    }
+                }
                 libs::KeyCode::KeyQ => {
                     if self.flag.get() {
                         return (Arc::new(ExitState::new()), EventHandleReturn::CONTINUE);
+                    }
+                }
+                libs::KeyCode::KeyX => {
+                    if self.flag.get() {
+                        self.flag.set(false);
+                        libs::sleep(200);
+                        libs::KeyCode::End.click();
+                        libs::sleep(100);
+                        libs::KeyCode::ShiftLeft.down();
+                        libs::sleep(100);
+                        libs::KeyCode::Home.click();
+                        libs::sleep(100);
+                        libs::KeyCode::ShiftLeft.up();
+                        libs::sleep(100);
+                        libs::KeyCode::Backspace.click();
+                        libs::sleep(100);
+                        libs::KeyCode::Return.click();
                     }
                 }
                 _ => { }
@@ -1225,7 +1252,6 @@ mod ctrl {
         }
     }
 
-    
     // --- 滑鼠連點 ---
     pub struct MouseClicksState {
         handle: Cell<Option<thread::JoinHandle<()>>>,
@@ -1302,6 +1328,120 @@ mod ctrl {
                     if self.alive.load(Ordering::Relaxed) {
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
+                    }
+                }
+                _ => { }
+            }
+            (self.clone(), EventHandleReturn::CONTINUE)
+        }
+    }
+
+    // --- 戰鬥狀態(alt 1~5 ==> 6~0) ---
+    pub struct FingingState {
+        alt_btn: sync::Arc<AtomicBool>,
+    }
+    impl FingingState {
+        fn new() -> FingingState { FingingState {
+            alt_btn: sync::Arc::new(AtomicBool::new(false)),
+        } }
+    }
+    impl State for FingingState {
+        fn enter(self: Arc<Self>) {
+            // 若下面的對話框開著, 則戰鬥時按下 shift 會沒作用, 故需關閉下方對話框
+            libs::past_text("戰鬥狀態開始..., 0.5 秒後關閉此對話框, Right Ctrl 回到 WaitingState");
+            libs::sleep(500);
+            libs::KeyCode::End.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.down();
+            libs::sleep(100);
+            libs::KeyCode::Home.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.up();
+            libs::sleep(100);
+            libs::KeyCode::Backspace.click();
+            libs::sleep(100);
+            libs::KeyCode::Return.click();
+        }
+        fn out(self: Arc<Self>) {
+            libs::sleep(50);
+            libs::KeyCode::Return.click();
+            libs::sleep(100);
+            libs::KeyCode::End.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.down();
+            libs::sleep(100);
+            libs::KeyCode::Home.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.up();
+            libs::sleep(100);
+            libs::KeyCode::Backspace.click();
+            libs::sleep(100);
+            libs::KeyCode::Return.click();
+        }
+        fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        #[allow(unused_variables)]
+        fn do_keyboard_down(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+            let alt_btn = self.alt_btn.clone();
+            match event {
+                libs::KeyCode::Alt => {
+                    if !alt_btn.load(Ordering::Relaxed) {
+                        self.alt_btn.store(true, Ordering::Relaxed);
+                    }
+                }
+                _ => { }
+            }
+            (self.clone(), EventHandleReturn::CONTINUE)
+        }
+        #[allow(unused_variables)]
+        fn do_keyboard_up(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+            let alt_btn = self.alt_btn.clone();
+            match event {
+                libs::KeyCode::ControlRight => {
+                    return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                }
+                libs::KeyCode::Alt => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        self.alt_btn.store(false, Ordering::Relaxed);
+                    }
+                }
+                libs::KeyCode::Num1 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num6.click();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::Num2 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num7.click();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::Num3 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num8.click();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::Num4 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num9.click();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::Num5 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num0.click();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 _ => { }
@@ -1415,10 +1555,15 @@ mod ctrl {
 }
 
 fn main() {
+    //檢視鍵盤事件
     //libs::listen_keyboard_event();
+
+    //檢視滑鼠事件
     //libs::listen_mouse_event();
     
+    //啟動監聽模式(for mabinogi)
     ctrl::listen();
+
     //ctrl::test01_copy_to_end();
     //ctrl::test02_mask_testing();
     //ctrl::test02_test_simulate_detail();
