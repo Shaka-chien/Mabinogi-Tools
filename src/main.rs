@@ -1387,6 +1387,57 @@ mod ctrl {
                     if !alt_btn.load(Ordering::Relaxed) {
                         self.alt_btn.store(true, Ordering::Relaxed);
                     }
+                    //return (self.clone(), EventHandleReturn::INTERCEPT);
+                }
+                libs::KeyCode::Num1 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num6.click();
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::Num2 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num7.click();
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::Num3 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num8.click();
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::Num4 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num9.click();
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::Num5 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::Num0.click();
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
                 }
                 _ => { }
             }
@@ -1400,47 +1451,30 @@ mod ctrl {
                     return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
                 }
                 libs::KeyCode::Alt => {
-                    if alt_btn.load(Ordering::Relaxed) {
-                        self.alt_btn.store(false, Ordering::Relaxed);
-                    }
+                    self.alt_btn.store(false, Ordering::Relaxed);
                 }
                 libs::KeyCode::Num1 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        libs::KeyCode::Alt.up();
-                        libs::sleep(20);
-                        libs::KeyCode::Num6.click();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 libs::KeyCode::Num2 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        libs::KeyCode::Alt.up();
-                        libs::sleep(20);
-                        libs::KeyCode::Num7.click();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 libs::KeyCode::Num3 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        libs::KeyCode::Alt.up();
-                        libs::sleep(20);
-                        libs::KeyCode::Num8.click();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 libs::KeyCode::Num4 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        libs::KeyCode::Alt.up();
-                        libs::sleep(20);
-                        libs::KeyCode::Num9.click();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 libs::KeyCode::Num5 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        libs::KeyCode::Alt.up();
-                        libs::sleep(20);
-                        libs::KeyCode::Num0.click();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
