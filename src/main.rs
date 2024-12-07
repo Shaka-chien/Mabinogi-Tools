@@ -1088,6 +1088,7 @@ mod ctrl {
             AtomicBool, Ordering
         },
         sync::Arc,
+        collections::HashMap,
     };
 
     #[allow(dead_code)]
@@ -1336,14 +1337,32 @@ mod ctrl {
         }
     }
 
-    // --- 戰鬥狀態(alt 1~5 ==> 6~0) ---
+    // --- 戰鬥狀態(alt 1~5 ==> 6~0, alt qwer ==> F5~F8, alt asdf ==> F9~F12) ---
     pub struct FingingState {
         alt_btn: sync::Arc<AtomicBool>,
+        press: sync::Arc<HashMap<String,AtomicBool>>,
     }
     impl FingingState {
-        fn new() -> FingingState { FingingState {
-            alt_btn: sync::Arc::new(AtomicBool::new(false)),
-        } }
+        fn new() -> FingingState {
+            let mut press: HashMap<String,AtomicBool> = HashMap::new();
+            press.insert(String::from("Num1"), AtomicBool::new(false));
+            press.insert(String::from("Num2"), AtomicBool::new(false));
+            press.insert(String::from("Num3"), AtomicBool::new(false));
+            press.insert(String::from("Num4"), AtomicBool::new(false));
+            press.insert(String::from("Num5"), AtomicBool::new(false));
+            press.insert(String::from("KeyQ"), AtomicBool::new(false));
+            press.insert(String::from("KeyW"), AtomicBool::new(false));
+            press.insert(String::from("KeyE"), AtomicBool::new(false));
+            press.insert(String::from("KeyR"), AtomicBool::new(false));
+            press.insert(String::from("KeyA"), AtomicBool::new(false));
+            press.insert(String::from("KeyS"), AtomicBool::new(false));
+            press.insert(String::from("KeyD"), AtomicBool::new(false));
+            press.insert(String::from("KeyF"), AtomicBool::new(false));
+            FingingState {
+                alt_btn: sync::Arc::new(AtomicBool::new(false)),
+                press: sync::Arc::new(press),
+            }
+        }
     }
     impl State for FingingState {
         fn enter(self: Arc<Self>) {
@@ -1382,6 +1401,7 @@ mod ctrl {
         #[allow(unused_variables)]
         fn do_keyboard_down(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
             let alt_btn = self.alt_btn.clone();
+            let press = self.press.clone();
             match event {
                 libs::KeyCode::Alt => {
                     if !alt_btn.load(Ordering::Relaxed) {
@@ -1393,7 +1413,8 @@ mod ctrl {
                     if alt_btn.load(Ordering::Relaxed) {
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
-                        libs::KeyCode::Num6.click();
+                        libs::KeyCode::Num6.down();
+                        press[&String::from("Num1")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1403,7 +1424,8 @@ mod ctrl {
                     if alt_btn.load(Ordering::Relaxed) {
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
-                        libs::KeyCode::Num7.click();
+                        libs::KeyCode::Num7.down();
+                        press[&String::from("Num2")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1413,7 +1435,8 @@ mod ctrl {
                     if alt_btn.load(Ordering::Relaxed) {
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
-                        libs::KeyCode::Num8.click();
+                        libs::KeyCode::Num8.down();
+                        press[&String::from("Num3")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1423,7 +1446,8 @@ mod ctrl {
                     if alt_btn.load(Ordering::Relaxed) {
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
-                        libs::KeyCode::Num9.click();
+                        libs::KeyCode::Num9.down();
+                        press[&String::from("Num4")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1433,7 +1457,96 @@ mod ctrl {
                     if alt_btn.load(Ordering::Relaxed) {
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
-                        libs::KeyCode::Num0.click();
+                        libs::KeyCode::Num0.down();
+                        press[&String::from("Num5")].store(true, Ordering::Relaxed);
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyQ => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::F5.down();
+                        press[&String::from("KeyQ")].store(true, Ordering::Relaxed);
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyW => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::F6.down();
+                        press[&String::from("KeyW")].store(true, Ordering::Relaxed);
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyE => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::F7.down();
+                        press[&String::from("KeyE")].store(true, Ordering::Relaxed);
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyR => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::F8.down();
+                        press[&String::from("KeyR")].store(true, Ordering::Relaxed);
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyA => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::F9.down();
+                        press[&String::from("KeyA")].store(true, Ordering::Relaxed);
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyS => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::F10.down();
+                        press[&String::from("KeyS")].store(true, Ordering::Relaxed);
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyD => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::F11.down();
+                        press[&String::from("KeyD")].store(true, Ordering::Relaxed);
+                        libs::sleep(20);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyF => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(20);
+                        libs::KeyCode::F12.down();
+                        press[&String::from("KeyF")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1446,6 +1559,7 @@ mod ctrl {
         #[allow(unused_variables)]
         fn do_keyboard_up(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
             let alt_btn = self.alt_btn.clone();
+            let press = self.press.clone();
             match event {
                 libs::KeyCode::ControlRight => {
                     return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
@@ -1454,27 +1568,93 @@ mod ctrl {
                     self.alt_btn.store(false, Ordering::Relaxed);
                 }
                 libs::KeyCode::Num1 => {
-                    if alt_btn.load(Ordering::Relaxed) {
+                    if press[&String::from("Num1")].load(Ordering::Relaxed) {
+                        libs::KeyCode::Num6.up();
+                        press[&String::from("Num1")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 libs::KeyCode::Num2 => {
-                    if alt_btn.load(Ordering::Relaxed) {
+                    if press[&String::from("Num2")].load(Ordering::Relaxed) {
+                        libs::KeyCode::Num7.up();
+                        press[&String::from("Num2")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 libs::KeyCode::Num3 => {
-                    if alt_btn.load(Ordering::Relaxed) {
+                    if press[&String::from("Num3")].load(Ordering::Relaxed) {
+                        libs::KeyCode::Num8.up();
+                        press[&String::from("Num3")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 libs::KeyCode::Num4 => {
-                    if alt_btn.load(Ordering::Relaxed) {
+                    if press[&String::from("Num4")].load(Ordering::Relaxed) {
+                        libs::KeyCode::Num9.up();
+                        press[&String::from("Num4")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 libs::KeyCode::Num5 => {
-                    if alt_btn.load(Ordering::Relaxed) {
+                    if press[&String::from("Num5")].load(Ordering::Relaxed) {
+                        libs::KeyCode::Num0.up();
+                        press[&String::from("Num5")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyQ => {
+                    if press[&String::from("KeyQ")].load(Ordering::Relaxed) {
+                        libs::KeyCode::F5.up();
+                        press[&String::from("KeyQ")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyW => {
+                    if press[&String::from("KeyW")].load(Ordering::Relaxed) {
+                        libs::KeyCode::F6.up();
+                        press[&String::from("KeyW")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyE => {
+                    if press[&String::from("KeyE")].load(Ordering::Relaxed) {
+                        libs::KeyCode::F7.up();
+                        press[&String::from("KeyE")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyR => {
+                    if press[&String::from("KeyR")].load(Ordering::Relaxed) {
+                        libs::KeyCode::F8.up();
+                        press[&String::from("KeyR")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyA => {
+                    if press[&String::from("KeyA")].load(Ordering::Relaxed) {
+                        libs::KeyCode::F9.up();
+                        press[&String::from("KeyA")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyS => {
+                    if press[&String::from("KeyS")].load(Ordering::Relaxed) {
+                        libs::KeyCode::F10.up();
+                        press[&String::from("KeyS")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyD => {
+                    if press[&String::from("KeyD")].load(Ordering::Relaxed) {
+                        libs::KeyCode::F11.up();
+                        press[&String::from("KeyD")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                libs::KeyCode::KeyF => {
+                    if press[&String::from("KeyF")].load(Ordering::Relaxed) {
+                        libs::KeyCode::F12.up();
+                        press[&String::from("KeyF")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
