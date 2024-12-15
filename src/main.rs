@@ -507,9 +507,6 @@ mod libs {
         End,
         Escape,
         F1,
-        F10,
-        F11,
-        F12,
         F2,
         F3,
         F4,
@@ -518,6 +515,9 @@ mod libs {
         F7,
         F8,
         F9,
+        F10,
+        F11,
+        F12,
         Home,
         LeftArrow,
         MetaLeft,
@@ -619,9 +619,6 @@ mod libs {
                 35      => { KeyCode::End }
                 27      => { KeyCode::Escape }
                 112     => { KeyCode::F1 }
-                121     => { KeyCode::F10 }
-                122     => { KeyCode::F11 }
-                123     => { KeyCode::F12 }
                 113     => { KeyCode::F2 }
                 114     => { KeyCode::F3 }
                 115     => { KeyCode::F4 }
@@ -630,6 +627,9 @@ mod libs {
                 118     => { KeyCode::F7 }
                 119     => { KeyCode::F8 }
                 120     => { KeyCode::F9 }
+                121     => { KeyCode::F10 }
+                122     => { KeyCode::F11 }
+                123     => { KeyCode::F12 }
                 36      => { KeyCode::Home }
                 37      => { KeyCode::LeftArrow }
                 91      => { KeyCode::MetaLeft }
@@ -727,9 +727,6 @@ mod libs {
                 KeyCode::End            => { 35     }
                 KeyCode::Escape         => { 27     }
                 KeyCode::F1             => { 112    }
-                KeyCode::F10            => { 121    }
-                KeyCode::F11            => { 122    }
-                KeyCode::F12            => { 123    }
                 KeyCode::F2             => { 113    }
                 KeyCode::F3             => { 114    }
                 KeyCode::F4             => { 115    }
@@ -738,6 +735,9 @@ mod libs {
                 KeyCode::F7             => { 118    }
                 KeyCode::F8             => { 119    }
                 KeyCode::F9             => { 120    }
+                KeyCode::F10            => { 121    }
+                KeyCode::F11            => { 122    }
+                KeyCode::F12            => { 123    }
                 KeyCode::Home           => { 36     }
                 KeyCode::LeftArrow      => { 37     }
                 KeyCode::MetaLeft       => { 91     }
@@ -872,9 +872,6 @@ mod libs {
                 KeyCode::Equal          => { 13 }
                 KeyCode::Escape         => { 1 }
                 KeyCode::F1             => { 59 }
-                KeyCode::F10            => { 68 }
-                KeyCode::F11            => { 87 }
-                KeyCode::F12            => { 88 }
                 KeyCode::F2             => { 60 }
                 KeyCode::F3             => { 61 }
                 KeyCode::F4             => { 62 }
@@ -883,6 +880,9 @@ mod libs {
                 KeyCode::F7             => { 65 }
                 KeyCode::F8             => { 66 }
                 KeyCode::F9             => { 67 }
+                KeyCode::F10            => { 68 }
+                KeyCode::F11            => { 87 }
+                KeyCode::F12            => { 88 }
                 KeyCode::Home           => { 71 }
                 KeyCode::Insert         => { 82 }
                 KeyCode::KeyA           => { 30 }
