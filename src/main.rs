@@ -518,6 +518,27 @@ mod libs {
         F10,
         F11,
         F12,
+        F13,
+        F14,
+        F15,
+        F16,
+        F17,
+        F18,
+        F19,
+        F20,
+        F21,
+        F22,
+        F23,
+        F24,
+        F25,
+        F26,
+        F27,
+        F28,
+        F29,
+        F30,
+        F31,
+        F32,
+        FN,
         Home,
         LeftArrow,
         MetaLeft,
@@ -535,6 +556,11 @@ mod libs {
         Pause,
         NumLock,
         BackQuote,
+
+        VolumeMute,
+        VolumeUp,
+        VolumeDown,
+        MediaPlayPause,
 
         // 數字1~0
         Num1,
@@ -605,6 +631,7 @@ mod libs {
         UnicodePrefix, // windows 字母前綴
         Unknow,
     }
+    // key code list - https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
     impl KeyCode {
         pub fn from_code(code: u32) -> KeyCode {
             match code {
@@ -630,6 +657,27 @@ mod libs {
                 121     => { KeyCode::F10 }
                 122     => { KeyCode::F11 }
                 123     => { KeyCode::F12 }
+                124     => { KeyCode::F13 }
+                125     => { KeyCode::F14 }
+                126     => { KeyCode::F15 }
+                127     => { KeyCode::F16 }
+                128     => { KeyCode::F17 }
+                129     => { KeyCode::F18 }
+                130     => { KeyCode::F19 }
+                131     => { KeyCode::F20 }
+                132     => { KeyCode::F21 }
+                133     => { KeyCode::F22 }
+                134     => { KeyCode::F23 }
+                135     => { KeyCode::F24 }
+                136     => { KeyCode::F25 }
+                137     => { KeyCode::F26 }
+                138     => { KeyCode::F27 }
+                139     => { KeyCode::F28 }
+                140     => { KeyCode::F29 }
+                141     => { KeyCode::F30 }
+                142     => { KeyCode::F31 }
+                143     => { KeyCode::F32 }
+                255     => { KeyCode::FN  }
                 36      => { KeyCode::Home }
                 37      => { KeyCode::LeftArrow }
                 91      => { KeyCode::MetaLeft }
@@ -699,6 +747,10 @@ mod libs {
                 107     => { KeyCode::KpPlus }
                 106     => { KeyCode::KpMultiply }
                 111     => { KeyCode::KpDivide }
+                173     => { KeyCode::VolumeMute }
+                174     => { KeyCode::VolumeDown }
+                175     => { KeyCode::VolumeUp }
+                179     => { KeyCode::MediaPlayPause }
                 96      => { KeyCode::Kp0 }
                 97      => { KeyCode::Kp1 }
                 98      => { KeyCode::Kp2 }
@@ -738,6 +790,27 @@ mod libs {
                 KeyCode::F10            => { 121    }
                 KeyCode::F11            => { 122    }
                 KeyCode::F12            => { 123    }
+                KeyCode::F13            => { 124    }
+                KeyCode::F14            => { 125    }
+                KeyCode::F15            => { 126    }
+                KeyCode::F16            => { 127    }
+                KeyCode::F17            => { 128    }
+                KeyCode::F18            => { 129    }
+                KeyCode::F19            => { 130    }
+                KeyCode::F20            => { 131    }
+                KeyCode::F21            => { 132    }
+                KeyCode::F22            => { 133    }
+                KeyCode::F23            => { 134    }
+                KeyCode::F24            => { 135    }
+                KeyCode::F25            => { 136    }
+                KeyCode::F26            => { 137    }
+                KeyCode::F27            => { 138    }
+                KeyCode::F28            => { 139    }
+                KeyCode::F29            => { 140    }
+                KeyCode::F30            => { 141    }
+                KeyCode::F31            => { 142    }
+                KeyCode::F32            => { 143    }
+                KeyCode::FN             => { 255    }
                 KeyCode::Home           => { 36     }
                 KeyCode::LeftArrow      => { 37     }
                 KeyCode::MetaLeft       => { 91     }
@@ -807,6 +880,10 @@ mod libs {
                 KeyCode::KpPlus         => { 107    }
                 KeyCode::KpMultiply     => { 106    }
                 KeyCode::KpDivide       => { 111    }
+                KeyCode::VolumeMute     => { 173    }
+                KeyCode::VolumeDown     => { 174    }
+                KeyCode::VolumeUp       => { 175    }
+                KeyCode::MediaPlayPause => { 179    }
                 KeyCode::Kp0            => { 96     }
                 KeyCode::Kp1            => { 97     }
                 KeyCode::Kp2            => { 98     }
