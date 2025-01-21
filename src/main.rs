@@ -89,6 +89,113 @@ mod libs {
         unsafe { SendInput(1, &mut input, size_of::<INPUT>() as i32) };
     }
 
+    #[allow(dead_code)]
+    fn simulate_mouse_lbtn_press_0() {
+        let mut input_down = INPUT {
+            type_: INPUT_MOUSE,
+            u: unsafe { std::mem::zeroed() },
+        };
+        unsafe {
+            let mi = input_down.u.mi_mut();
+            mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+        }
+        unsafe {
+            SendInput(1, &mut input_down, size_of::<INPUT>() as i32);
+        }
+    }
+
+    #[allow(dead_code)]
+    fn simulate_mouse_lbtn_release_0() {
+        let mut input_up = INPUT {
+            type_: INPUT_MOUSE,
+            u: unsafe { std::mem::zeroed() },
+        };
+        unsafe {
+            let mi = input_up.u.mi_mut();
+            mi.dwFlags = MOUSEEVENTF_LEFTUP | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+        }
+        unsafe {
+            SendInput(1, &mut input_up, size_of::<INPUT>() as i32);
+        }
+    }
+
+    #[allow(dead_code)]
+    fn simulate_mouse_rbtn_press_0() {
+        let mut input_down = INPUT {
+            type_: INPUT_MOUSE,
+            u: unsafe { std::mem::zeroed() },
+        };
+        unsafe {
+            let mi = input_down.u.mi_mut();
+            mi.dwFlags = MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+        }
+        unsafe {
+            SendInput(1, &mut input_down, size_of::<INPUT>() as i32);
+        }
+    }
+
+    #[allow(dead_code)]
+    fn simulate_mouse_rbtn_release_0() {
+        let mut input_up = INPUT {
+            type_: INPUT_MOUSE,
+            u: unsafe { std::mem::zeroed() },
+        };
+        unsafe {
+            let mi = input_up.u.mi_mut();
+            mi.dwFlags = MOUSEEVENTF_RIGHTUP | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+        }
+        unsafe {
+            SendInput(1, &mut input_up, size_of::<INPUT>() as i32);
+        }
+    }
+
+    #[allow(dead_code)]
+    fn simulate_mouse_mbtn_press_0() {
+        let mut input_down = INPUT {
+            type_: INPUT_MOUSE,
+            u: unsafe { std::mem::zeroed() },
+        };
+        unsafe {
+            let mi = input_down.u.mi_mut();
+            mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+        }
+        unsafe {
+            SendInput(1, &mut input_down, size_of::<INPUT>() as i32);
+        }
+    }
+
+    #[allow(dead_code)]
+    fn simulate_mouse_mbtn_release_0() {
+        let mut input_up = INPUT {
+            type_: INPUT_MOUSE,
+            u: unsafe { std::mem::zeroed() },
+        };
+        unsafe {
+            let mi = input_up.u.mi_mut();
+            mi.dwFlags = MOUSEEVENTF_MIDDLEUP | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+        }
+        unsafe {
+            SendInput(1, &mut input_up, size_of::<INPUT>() as i32);
+        }
+    }
+
+    #[allow(dead_code)]
+    fn simulate_mouse_whell_0(delta: i16) {
+        let mut input_up = INPUT {
+            type_: INPUT_MOUSE,
+            u: unsafe { std::mem::zeroed() },
+        };
+        unsafe {
+            let mi = input_up.u.mi_mut();
+            mi.mouseData = delta as u32;
+            mi.dwFlags = MOUSEEVENTF_WHEEL | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+        }
+        unsafe {
+            SendInput(1, &mut input_up, size_of::<INPUT>() as i32);
+        }
+    }
+
+    #[allow(dead_code)]
     fn simulate_mouse_lbtn_press(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
@@ -107,6 +214,7 @@ mod libs {
         }
     }
 
+    #[allow(dead_code)]
     fn simulate_mouse_lbtn_release(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
@@ -125,6 +233,7 @@ mod libs {
         }
     }
 
+    #[allow(dead_code)]
     fn simulate_mouse_rbtn_press(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
@@ -143,6 +252,7 @@ mod libs {
         }
     }
 
+    #[allow(dead_code)]
     fn simulate_mouse_rbtn_release(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
@@ -161,6 +271,7 @@ mod libs {
         }
     }
 
+    #[allow(dead_code)]
     fn simulate_mouse_mbtn_press(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
@@ -179,6 +290,7 @@ mod libs {
         }
     }
 
+    #[allow(dead_code)]
     fn simulate_mouse_mbtn_release(x: i32, y: i32) {
         let (dx, dy) = convert_to_absolute(x, y);
 
@@ -197,6 +309,7 @@ mod libs {
         }
     }
 
+    #[allow(dead_code)]
     fn simulate_mouse_whell(x: i32, y: i32, delta: i16) {
         let (dx, dy) = convert_to_absolute(x, y);
 
@@ -481,10 +594,9 @@ mod libs {
             }
         }
         pub fn click() {
-            let (x, y) = get_mouse_position();
-            simulate_mouse_lbtn_press(x, y);
+            simulate_mouse_lbtn_press_0();
             sleep(20);
-            simulate_mouse_lbtn_release(x, y);
+            simulate_mouse_lbtn_release_0();
         }
     }
 
@@ -1488,10 +1600,10 @@ mod ctrl {
                 }
                 libs::KeyCode::Num1 => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("Num1")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::Num6.down();
-                        press[&String::from("Num1")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1499,10 +1611,10 @@ mod ctrl {
                 }
                 libs::KeyCode::Num2 => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("Num2")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::Num7.down();
-                        press[&String::from("Num2")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1510,10 +1622,10 @@ mod ctrl {
                 }
                 libs::KeyCode::Num3 => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("Num3")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::Num8.down();
-                        press[&String::from("Num3")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1521,10 +1633,10 @@ mod ctrl {
                 }
                 libs::KeyCode::Num4 => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("Num4")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::Num9.down();
-                        press[&String::from("Num4")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1532,10 +1644,10 @@ mod ctrl {
                 }
                 libs::KeyCode::Num5 => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("Num5")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::Num0.down();
-                        press[&String::from("Num5")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1543,10 +1655,10 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyQ => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("KeyQ")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::F5.down();
-                        press[&String::from("KeyQ")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1554,10 +1666,10 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyW => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("KeyW")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::F6.down();
-                        press[&String::from("KeyW")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1565,10 +1677,10 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyE => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("KeyE")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::F7.down();
-                        press[&String::from("KeyE")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1576,10 +1688,10 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyR => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("KeyR")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::F8.down();
-                        press[&String::from("KeyR")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1587,10 +1699,10 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyA => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("KeyA")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::F9.down();
-                        press[&String::from("KeyA")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1598,10 +1710,10 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyS => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("KeyS")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::F10.down();
-                        press[&String::from("KeyS")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1609,10 +1721,10 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyD => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("KeyD")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::F11.down();
-                        press[&String::from("KeyD")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1620,10 +1732,10 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyF => {
                     if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("KeyF")].store(true, Ordering::Relaxed);
                         libs::KeyCode::Alt.up();
                         libs::sleep(20);
                         libs::KeyCode::F12.down();
-                        press[&String::from("KeyF")].store(true, Ordering::Relaxed);
                         libs::sleep(20);
                         libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
