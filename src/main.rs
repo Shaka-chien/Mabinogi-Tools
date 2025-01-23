@@ -30,6 +30,21 @@ mod libs {
         }
     }
 
+    pub fn convert_to_absolute(x: i32, y: i32) -> (i32, i32) {
+        let screen_width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
+        let screen_height = unsafe { GetSystemMetrics(SM_CYSCREEN) };
+
+        let fx = x as f64;
+        let fy = y as f64;
+        let fscreen_width = screen_width as f64;
+        let fscreen_height = screen_height as f64;
+        
+        let dx = (fx * 65535.0 / fscreen_width).round() as i32;
+        let dy = (fy * 65535.0 / fscreen_height).round() as i32;
+        
+        (dx, dy)
+    }
+
     // --- keyboard, mouse simulater core ---
     fn simulate_key_press(code: u32, flags_ext: u32, scan_code: u16) {
         let mut input = INPUT {
@@ -63,19 +78,7 @@ mod libs {
         // unsafe { let ki = input.u.ki(); keybd_event(ki.wVk as u8, 0, ki.dwFlags, 0) };
     }
 
-    fn convert_to_absolute(x: i32, y: i32) -> (i32, i32) {
-        let screen_width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
-        let screen_height = unsafe { GetSystemMetrics(SM_CYSCREEN) };
-        
-        let dx = (x * 65535 / screen_width) as i32;
-        let dy = (y * 65535 / screen_height) as i32;
-        
-        (dx, dy)
-    }
-
-    fn simulate_mouse_move(x: i32, y: i32) {
-        let (dx, dy) = convert_to_absolute(x, y);
-
+    fn simulate_mouse_move(dx: i32, dy: i32) {
         let mut input = INPUT {
             type_: INPUT_MOUSE,
             u: unsafe { std::mem::zeroed() },
@@ -90,115 +93,7 @@ mod libs {
     }
 
     #[allow(dead_code)]
-    fn simulate_mouse_lbtn_press_0() {
-        let mut input_down = INPUT {
-            type_: INPUT_MOUSE,
-            u: unsafe { std::mem::zeroed() },
-        };
-        unsafe {
-            let mi = input_down.u.mi_mut();
-            mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-        }
-        unsafe {
-            SendInput(1, &mut input_down, size_of::<INPUT>() as i32);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn simulate_mouse_lbtn_release_0() {
-        let mut input_up = INPUT {
-            type_: INPUT_MOUSE,
-            u: unsafe { std::mem::zeroed() },
-        };
-        unsafe {
-            let mi = input_up.u.mi_mut();
-            mi.dwFlags = MOUSEEVENTF_LEFTUP | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-        }
-        unsafe {
-            SendInput(1, &mut input_up, size_of::<INPUT>() as i32);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn simulate_mouse_rbtn_press_0() {
-        let mut input_down = INPUT {
-            type_: INPUT_MOUSE,
-            u: unsafe { std::mem::zeroed() },
-        };
-        unsafe {
-            let mi = input_down.u.mi_mut();
-            mi.dwFlags = MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-        }
-        unsafe {
-            SendInput(1, &mut input_down, size_of::<INPUT>() as i32);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn simulate_mouse_rbtn_release_0() {
-        let mut input_up = INPUT {
-            type_: INPUT_MOUSE,
-            u: unsafe { std::mem::zeroed() },
-        };
-        unsafe {
-            let mi = input_up.u.mi_mut();
-            mi.dwFlags = MOUSEEVENTF_RIGHTUP | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-        }
-        unsafe {
-            SendInput(1, &mut input_up, size_of::<INPUT>() as i32);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn simulate_mouse_mbtn_press_0() {
-        let mut input_down = INPUT {
-            type_: INPUT_MOUSE,
-            u: unsafe { std::mem::zeroed() },
-        };
-        unsafe {
-            let mi = input_down.u.mi_mut();
-            mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-        }
-        unsafe {
-            SendInput(1, &mut input_down, size_of::<INPUT>() as i32);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn simulate_mouse_mbtn_release_0() {
-        let mut input_up = INPUT {
-            type_: INPUT_MOUSE,
-            u: unsafe { std::mem::zeroed() },
-        };
-        unsafe {
-            let mi = input_up.u.mi_mut();
-            mi.dwFlags = MOUSEEVENTF_MIDDLEUP | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-        }
-        unsafe {
-            SendInput(1, &mut input_up, size_of::<INPUT>() as i32);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn simulate_mouse_whell_0(delta: i16) {
-        let mut input_up = INPUT {
-            type_: INPUT_MOUSE,
-            u: unsafe { std::mem::zeroed() },
-        };
-        unsafe {
-            let mi = input_up.u.mi_mut();
-            mi.mouseData = delta as u32;
-            mi.dwFlags = MOUSEEVENTF_WHEEL | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-        }
-        unsafe {
-            SendInput(1, &mut input_up, size_of::<INPUT>() as i32);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn simulate_mouse_lbtn_press(x: i32, y: i32) {
-        let (dx, dy) = convert_to_absolute(x, y);
-
+    fn simulate_mouse_lbtn_press(dx: i32, dy: i32) {
         let mut input_down = INPUT {
             type_: INPUT_MOUSE,
             u: unsafe { std::mem::zeroed() },
@@ -215,9 +110,7 @@ mod libs {
     }
 
     #[allow(dead_code)]
-    fn simulate_mouse_lbtn_release(x: i32, y: i32) {
-        let (dx, dy) = convert_to_absolute(x, y);
-
+    fn simulate_mouse_lbtn_release(dx: i32, dy: i32) {
         let mut input_up = INPUT {
             type_: INPUT_MOUSE,
             u: unsafe { std::mem::zeroed() },
@@ -234,9 +127,7 @@ mod libs {
     }
 
     #[allow(dead_code)]
-    fn simulate_mouse_rbtn_press(x: i32, y: i32) {
-        let (dx, dy) = convert_to_absolute(x, y);
-
+    fn simulate_mouse_rbtn_press(dx: i32, dy: i32) {
         let mut input_down = INPUT {
             type_: INPUT_MOUSE,
             u: unsafe { std::mem::zeroed() },
@@ -253,9 +144,7 @@ mod libs {
     }
 
     #[allow(dead_code)]
-    fn simulate_mouse_rbtn_release(x: i32, y: i32) {
-        let (dx, dy) = convert_to_absolute(x, y);
-
+    fn simulate_mouse_rbtn_release(dx: i32, dy: i32) {
         let mut input_up = INPUT {
             type_: INPUT_MOUSE,
             u: unsafe { std::mem::zeroed() },
@@ -272,9 +161,7 @@ mod libs {
     }
 
     #[allow(dead_code)]
-    fn simulate_mouse_mbtn_press(x: i32, y: i32) {
-        let (dx, dy) = convert_to_absolute(x, y);
-
+    fn simulate_mouse_mbtn_press(dx: i32, dy: i32) {
         let mut input_down = INPUT {
             type_: INPUT_MOUSE,
             u: unsafe { std::mem::zeroed() },
@@ -291,9 +178,7 @@ mod libs {
     }
 
     #[allow(dead_code)]
-    fn simulate_mouse_mbtn_release(x: i32, y: i32) {
-        let (dx, dy) = convert_to_absolute(x, y);
-
+    fn simulate_mouse_mbtn_release(dx: i32, dy: i32) {
         let mut input_up = INPUT {
             type_: INPUT_MOUSE,
             u: unsafe { std::mem::zeroed() },
@@ -310,9 +195,7 @@ mod libs {
     }
 
     #[allow(dead_code)]
-    fn simulate_mouse_whell(x: i32, y: i32, delta: i16) {
-        let (dx, dy) = convert_to_absolute(x, y);
-
+    fn simulate_mouse_whell(dx: i32, dy: i32, delta: i16) {
         let mut input_up = INPUT {
             type_: INPUT_MOUSE,
             u: unsafe { std::mem::zeroed() },
@@ -580,7 +463,13 @@ mod libs {
         MBtnUp { x: i32, y: i32 },
     }
     impl MouseEvent {
-        pub fn get_mouse_position() -> (i32, i32) { get_mouse_position() }
+        // position
+        pub fn get_mouse_position0() -> (i32, i32) { get_mouse_position() }
+        // dx, dy
+        pub fn get_mouse_position1() -> (i32, i32) {
+            let (x, y) = get_mouse_position();
+            convert_to_absolute(x, y)
+        }
         pub fn do_it(&self) {
             match self {
                 MouseEvent::Move { x, y } => { simulate_mouse_move(*x, *y); }
@@ -593,10 +482,10 @@ mod libs {
                 MouseEvent::MBtnUp { x, y } => { simulate_mouse_mbtn_release(*x, *y); }
             }
         }
-        pub fn click() {
-            simulate_mouse_lbtn_press_0();
+        pub fn click(dx: i32, dy: i32) {
+            simulate_mouse_lbtn_press(dx, dy);
             sleep(20);
-            simulate_mouse_lbtn_release_0();
+            simulate_mouse_lbtn_release(dx, dy);
         }
     }
 
@@ -1274,7 +1163,7 @@ mod ctrl {
         sync,
         thread,
         sync::atomic::{
-            AtomicBool, Ordering
+            AtomicBool, AtomicI32, Ordering
         },
         sync::Arc,
         collections::HashMap,
@@ -1413,7 +1302,7 @@ mod ctrl {
     }
     impl State for MousePositionState {
         fn enter(self: Arc<Self>) {
-            let (x, y) = libs::MouseEvent::get_mouse_position();
+            let (x, y) = libs::MouseEvent::get_mouse_position0();
             libs::past_text(format!("當前滑鼠位置為 x: {}, y: {}, esc 回到 WaitingState", x, y));
         }
         fn out(self: Arc<Self>) {
@@ -1447,6 +1336,8 @@ mod ctrl {
         handle: Cell<Option<thread::JoinHandle<()>>>,
         alive: sync::Arc<AtomicBool>,
         r_mouse_btn: sync::Arc<AtomicBool>,
+        dx: sync::Arc<AtomicI32>,
+        dy: sync::Arc<AtomicI32>,
     }
     impl MouseClicksState {
         fn new() -> MouseClicksState {
@@ -1454,6 +1345,8 @@ mod ctrl {
                 handle: Cell::new(None),
                 alive: sync::Arc::new(AtomicBool::new(false)),
                 r_mouse_btn: sync::Arc::new(AtomicBool::new(false)),
+                dx: sync::Arc::new(AtomicI32::new(-1)),
+                dy: sync::Arc::new(AtomicI32::new(-1)),
             }
         }
     }
@@ -1461,13 +1354,20 @@ mod ctrl {
         fn enter(self: Arc<Self>) {
             let alive = self.alive.clone();
             let r_mouse_btn = self.r_mouse_btn.clone();
+            let dx = self.dx.clone();
+            let dy = self.dy.clone();
+
+            let (_dx, _dy) = libs::MouseEvent::get_mouse_position1();
+            if dx.load(Ordering::Relaxed) == -1 { dx.store(_dx, Ordering::Relaxed); }
+            if dy.load(Ordering::Relaxed) == -1 { dy.store(_dy, Ordering::Relaxed); }
+
             if !alive.load(Ordering::Relaxed) {
                 libs::past_text(format!("滑鼠連點啟動中, esc 回到 WaitingState"));
-                self.alive.store(true, Ordering::Relaxed);
+                alive.store(true, Ordering::Relaxed);
                 self.handle.set(Some(thread::spawn(move || {
                     while alive.load(Ordering::Relaxed) {
                         if !r_mouse_btn.load(Ordering::Relaxed) {
-                            libs::MouseEvent::click();
+                            libs::MouseEvent::click(dx.load(Ordering::Relaxed), dy.load(Ordering::Relaxed));
                         }
                         libs::sleep(200);
                     }
@@ -1493,7 +1393,14 @@ mod ctrl {
         fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
         fn do_mouse_event(self: Arc<Self>, event: libs::MouseEvent) -> (Arc<dyn State>, EventHandleReturn) {
+            let dx = self.dx.clone();
+            let dy = self.dy.clone();
             match event {
+                libs::MouseEvent::Move { x, y } => {
+                    let (_dx, _dy) = libs::convert_to_absolute(x, y);
+                    dx.store(_dx, Ordering::Relaxed);
+                    dy.store(_dy, Ordering::Relaxed);
+                }
                 libs::MouseEvent::RBtnDown { x, y } => {
                     self.r_mouse_btn.store(true, Ordering::Relaxed);
                 }
@@ -1950,7 +1857,8 @@ mod ctrl {
         libs::sleep(500);
         libs::KeyCode::Home.click();
         libs::sleep(500);
-        libs::MouseEvent::click();
+        let (dx, dy) = libs::MouseEvent::get_mouse_position1();
+        libs::MouseEvent::click(dx, dy);
 
         handle01.join().unwrap(); // 等待執行緒結束
         handle02.join().unwrap(); // 等待執行緒結束
