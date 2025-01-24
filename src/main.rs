@@ -1498,6 +1498,15 @@ mod ctrl {
                 dest_cnt_w: sync::Arc::new(AtomicI32::new(-1)),
             }
         }
+        fn error_rtn(is_end: sync::Arc<AtomicBool>) -> (Arc<dyn State>, EventHandleReturn) {
+            is_end.store(true, Ordering::Relaxed);
+            Tools::line_text_clear();
+            libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
+            libs::sleep(3000);
+            Tools::line_text_clear();
+            libs::KeyCode::Return.click();
+            return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+        }
     }
     impl State for ItemMoveToState {
         fn enter(self: Arc<Self>) {
@@ -1515,7 +1524,7 @@ mod ctrl {
         fn do_keyboard_up(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
             let is_end      = self.is_end.clone();
             let step        = self.step.clone();
-            let item_dbase1  = self.item_dbase1.clone();
+            let item_dbase1 = self.item_dbase1.clone();
             let res_x       = self.res_x.clone();
             let res_y       = self.res_y.clone();
             let dest_x      = self.dest_x.clone();
@@ -1523,7 +1532,7 @@ mod ctrl {
             let item_w      = self.item_w.clone();
             let item_h      = self.item_h.clone();
             let item_cnt_w  = self.item_cnt_w.clone();
-            let item_cnt     = self.item_cnt.clone();
+            let item_cnt    = self.item_cnt.clone();
             let dest_cnt_w  = self.dest_cnt_w.clone();
             if !is_end.load(Ordering::Relaxed) {
                 match event {
@@ -1569,13 +1578,7 @@ mod ctrl {
                                         step.store(4, Ordering::Relaxed);
                                     }
                                     _ => {
-                                        is_end.store(true, Ordering::Relaxed);
-                                        Tools::line_text_clear();
-                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
-                                        libs::sleep(3000);
-                                        Tools::line_text_clear();
-                                        libs::KeyCode::Return.click();
-                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                        return ItemMoveToState::error_rtn(is_end.clone());
                                     }
                                 }
                             }
@@ -1595,13 +1598,7 @@ mod ctrl {
                                         step.store(5, Ordering::Relaxed);
                                     }
                                     _ => {
-                                        is_end.store(true, Ordering::Relaxed);
-                                        Tools::line_text_clear();
-                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
-                                        libs::sleep(3000);
-                                        Tools::line_text_clear();
-                                        libs::KeyCode::Return.click();
-                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                        return ItemMoveToState::error_rtn(is_end.clone());
                                     }
                                 }
                             }
@@ -1621,13 +1618,7 @@ mod ctrl {
                                         step.store(6, Ordering::Relaxed);
                                     }
                                     _ => {
-                                        is_end.store(true, Ordering::Relaxed);
-                                        Tools::line_text_clear();
-                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
-                                        libs::sleep(3000);
-                                        Tools::line_text_clear();
-                                        libs::KeyCode::Return.click();
-                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                        return ItemMoveToState::error_rtn(is_end.clone());
                                     }
                                 }
                             }
@@ -1647,13 +1638,7 @@ mod ctrl {
                                         step.store(7, Ordering::Relaxed);
                                     }
                                     _ => {
-                                        is_end.store(true, Ordering::Relaxed);
-                                        Tools::line_text_clear();
-                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
-                                        libs::sleep(3000);
-                                        Tools::line_text_clear();
-                                        libs::KeyCode::Return.click();
-                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                        return ItemMoveToState::error_rtn(is_end.clone());
                                     }
                                 }
                             }
@@ -1683,13 +1668,7 @@ mod ctrl {
                                         step.store(8, Ordering::Relaxed);
                                     }
                                     _ => {
-                                        is_end.store(true, Ordering::Relaxed);
-                                        Tools::line_text_clear();
-                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
-                                        libs::sleep(3000);
-                                        Tools::line_text_clear();
-                                        libs::KeyCode::Return.click();
-                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                        return ItemMoveToState::error_rtn(is_end.clone());
                                     }
                                 }
                             }
