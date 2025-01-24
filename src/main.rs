@@ -1181,7 +1181,9 @@ mod ctrl {
         fn enter(self: Arc<Self>) {}
         fn out(self: Arc<Self>) {}
 
+        // 遇到程式摸擬的 鍵盤/滑鼠 事件, 是否要靜聲(不處理事件)
         fn mute_event_when_simulate(self: Arc<Self>) -> bool { true }
+        // 靜聲時的 return value hook
         fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn);
 
         #[allow(unused_variables)]
