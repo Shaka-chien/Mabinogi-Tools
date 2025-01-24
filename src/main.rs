@@ -1169,6 +1169,32 @@ mod ctrl {
         collections::HashMap,
     };
 
+    pub struct Tools {}
+    impl Tools {
+        pub fn line_text_clear() {
+            libs::KeyCode::End.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.down();
+            libs::sleep(100);
+            libs::KeyCode::Home.click();
+            libs::sleep(100);
+            libs::KeyCode::ShiftLeft.up();
+            libs::sleep(100);
+            libs::KeyCode::Backspace.click();
+        }
+        pub fn line_text_cut_end_block() -> String {
+            libs::KeyCode::End.click();
+            libs::sleep(100);
+            libs::KeyCode::ControlLeft.down();
+            libs::sleep(100);
+            libs::KeyCode::LeftArrow.click();
+            libs::sleep(100);
+            libs::KeyCode::ControlLeft.up();
+
+            libs::cp_text_line_to_end()
+        }
+    }
+
     #[allow(dead_code)]
     pub enum EventHandleReturn {
         CONTINUE,  // 事件泡泡繼續傳遞
@@ -1251,12 +1277,17 @@ mod ctrl {
                         libs::sleep(50);
                         libs::KeyCode::Return.click();
                         libs::sleep(50);
-                        libs::past_text("請選擇 - c: 滑鼠連點, m: 取得滑鼠位置, b: 戰鬥模式, x: 返回待命狀態, q:退出 :: ");
+                        libs::past_text("請選擇 - c: 滑鼠連點, m: 取得滑鼠位置, t: 道具移動, b: 戰鬥模式, x: 返回待命狀態, q:退出 :: ");
                     }
                 }
                 libs::KeyCode::KeyM => {
                     if self.flag.get() {
                         return (Arc::new(MousePositionState::new()), EventHandleReturn::CONTINUE);
+                    }
+                }
+                libs::KeyCode::KeyT => {
+                    if self.flag.get() {
+                        return (Arc::new(ItemMoveToState::new()), EventHandleReturn::CONTINUE);
                     }
                 }
                 libs::KeyCode::KeyC => {
@@ -1430,6 +1461,317 @@ mod ctrl {
                     }
                 }
                 _ => { }
+            }
+            (self.clone(), EventHandleReturn::CONTINUE)
+        }
+    }
+
+    // --- 批次道具移動 ---
+    pub struct ItemMoveToState {
+        is_end: sync::Arc<AtomicBool>,
+        step: sync::Arc<AtomicI32>,
+        item_dbase1: sync::Arc<AtomicI32>,
+        res_x: sync::Arc<AtomicI32>,
+        res_y: sync::Arc<AtomicI32>,
+        dest_x: sync::Arc<AtomicI32>,
+        dest_y: sync::Arc<AtomicI32>,
+        item_w: sync::Arc<AtomicI32>,
+        item_h: sync::Arc<AtomicI32>,
+        item_cnt_w: sync::Arc<AtomicI32>,
+        item_cnt: sync::Arc<AtomicI32>,
+        dest_cnt_w: sync::Arc<AtomicI32>,
+    }
+    impl ItemMoveToState {
+        fn new() -> ItemMoveToState {
+            ItemMoveToState {
+                is_end: sync::Arc::new(AtomicBool::new(false)),
+                step: sync::Arc::new(AtomicI32::new(1)),
+                item_dbase1: sync::Arc::new(AtomicI32::new(20)),
+                res_x: sync::Arc::new(AtomicI32::new(-1)),
+                res_y: sync::Arc::new(AtomicI32::new(-1)),
+                dest_x: sync::Arc::new(AtomicI32::new(-1)),
+                dest_y: sync::Arc::new(AtomicI32::new(-1)),
+                item_w: sync::Arc::new(AtomicI32::new(-1)),
+                item_h: sync::Arc::new(AtomicI32::new(-1)),
+                item_cnt_w: sync::Arc::new(AtomicI32::new(-1)),
+                item_cnt: sync::Arc::new(AtomicI32::new(-1)),
+                dest_cnt_w: sync::Arc::new(AtomicI32::new(-1)),
+            }
+        }
+    }
+    impl State for ItemMoveToState {
+        fn enter(self: Arc<Self>) {
+            libs::past_text(format!("批次道具移動, 請移動到道具來源處, 並按下 right shift 進行下一步"));
+        }
+        fn out(self: Arc<Self>) {
+            libs::KeyCode::Return.click();
+            libs::sleep(100);
+            Tools::line_text_clear();
+            libs::sleep(100);
+            libs::KeyCode::Return.click();
+        }
+        fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
+        #[allow(unused_variables)]
+        fn do_keyboard_up(self: Arc<Self>, event: libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+            let is_end      = self.is_end.clone();
+            let step        = self.step.clone();
+            let item_dbase1  = self.item_dbase1.clone();
+            let res_x       = self.res_x.clone();
+            let res_y       = self.res_y.clone();
+            let dest_x      = self.dest_x.clone();
+            let dest_y      = self.dest_y.clone();
+            let item_w      = self.item_w.clone();
+            let item_h      = self.item_h.clone();
+            let item_cnt_w  = self.item_cnt_w.clone();
+            let item_cnt     = self.item_cnt.clone();
+            let dest_cnt_w  = self.dest_cnt_w.clone();
+            if !is_end.load(Ordering::Relaxed) {
+                match event {
+                    libs::KeyCode::ShiftRight => {
+                        match step.load(Ordering::Relaxed) {
+                            1 => {
+                                // 道具來源處
+                                let (x, y) = libs::MouseEvent::get_mouse_position0();
+                                res_x.store(x, Ordering::Relaxed);
+                                res_y.store(y, Ordering::Relaxed);
+
+                                libs::sleep(100);
+                                Tools::line_text_clear();
+                                libs::sleep(100);
+                                libs::past_text(format!("道具位置為 x: {}, y: {}, 請移動到道具目標處, 並按下 right shift 進行下一步 :: ", x, y));
+                                step.store(2, Ordering::Relaxed);
+                            }
+                            2 => {
+                                // 道具目標處
+                                let (x, y) = libs::MouseEvent::get_mouse_position0();
+                                dest_x.store(x, Ordering::Relaxed);
+                                dest_y.store(y, Ordering::Relaxed);
+
+                                libs::sleep(100);
+                                Tools::line_text_clear();
+                                libs::sleep(100);
+                                libs::past_text(format!("道具目標為 x: {}, y: {}, 輸入道具寬 (right shift 下一步) :: ", x, y));
+                                step.store(3, Ordering::Relaxed);
+                            }
+                            3 => {
+                                // 道具寬
+                                libs::sleep(100);
+                                let _item_w = Tools::line_text_cut_end_block();
+
+                                match _item_w.parse::<i32>() {
+                                    Ok(_int_item_w) => {
+                                        item_w.store(_int_item_w, Ordering::Relaxed);
+                                        libs::sleep(100);
+                                        Tools::line_text_clear();
+                                        libs::sleep(100);
+                                        libs::past_text(format!("道具寬為 {}, 輸入道具高 (right shift 下一步) :: ", _item_w));
+
+                                        step.store(4, Ordering::Relaxed);
+                                    }
+                                    _ => {
+                                        is_end.store(true, Ordering::Relaxed);
+                                        Tools::line_text_clear();
+                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
+                                        libs::sleep(3000);
+                                        Tools::line_text_clear();
+                                        libs::KeyCode::Return.click();
+                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                    }
+                                }
+                            }
+                            4 => {
+                                // 道具高
+                                libs::sleep(100);
+                                let _item_h = Tools::line_text_cut_end_block();
+
+                                match _item_h.parse::<i32>() {
+                                    Ok(_int_item_h) => {
+                                        item_h.store(_int_item_h, Ordering::Relaxed);
+                                        libs::sleep(100);
+                                        Tools::line_text_clear();
+                                        libs::sleep(100);
+                                        libs::past_text(format!("道具高為 {}, 請輸入道具數 (right shift 下一步) :: ", _item_h));
+
+                                        step.store(5, Ordering::Relaxed);
+                                    }
+                                    _ => {
+                                        is_end.store(true, Ordering::Relaxed);
+                                        Tools::line_text_clear();
+                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
+                                        libs::sleep(3000);
+                                        Tools::line_text_clear();
+                                        libs::KeyCode::Return.click();
+                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                    }
+                                }
+                            }
+                            5 => {
+                                // 道具數
+                                libs::sleep(100);
+                                let _item_cnt = Tools::line_text_cut_end_block();
+
+                                match _item_cnt.parse::<i32>() {
+                                    Ok(_int_item_cnt) => {
+                                        item_cnt.store(_int_item_cnt, Ordering::Relaxed);
+                                        libs::sleep(100);
+                                        Tools::line_text_clear();
+                                        libs::sleep(100);
+                                        libs::past_text(format!("道具數為 {}, 請輸入道具寬數 (right shift 下一步) :: ", _item_cnt));
+
+                                        step.store(6, Ordering::Relaxed);
+                                    }
+                                    _ => {
+                                        is_end.store(true, Ordering::Relaxed);
+                                        Tools::line_text_clear();
+                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
+                                        libs::sleep(3000);
+                                        Tools::line_text_clear();
+                                        libs::KeyCode::Return.click();
+                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                    }
+                                }
+                            }
+                            6 => {
+                                // 道具寬數
+                                libs::sleep(100);
+                                let _item_cnt_w = Tools::line_text_cut_end_block();
+
+                                match _item_cnt_w.parse::<i32>() {
+                                    Ok(_int_item_cnt_w) => {
+                                        item_cnt_w.store(_int_item_cnt_w, Ordering::Relaxed);
+                                        libs::sleep(100);
+                                        Tools::line_text_clear();
+                                        libs::sleep(100);
+                                        libs::past_text(format!("道具寬數為 {}, 請輸入目標寬數 (right shift 下一步) :: ", _item_cnt_w));
+
+                                        step.store(7, Ordering::Relaxed);
+                                    }
+                                    _ => {
+                                        is_end.store(true, Ordering::Relaxed);
+                                        Tools::line_text_clear();
+                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
+                                        libs::sleep(3000);
+                                        Tools::line_text_clear();
+                                        libs::KeyCode::Return.click();
+                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                    }
+                                }
+                            }
+                            7 => {
+                                // 目標寬數
+                                libs::sleep(100);
+                                let _dest_cnt_w = Tools::line_text_cut_end_block();
+
+                                match _dest_cnt_w.parse::<i32>() {
+                                    Ok(_int_dest_cnt_w) => {
+                                        dest_cnt_w.store(_int_dest_cnt_w, Ordering::Relaxed);
+                                        libs::sleep(100);
+                                        Tools::line_text_clear();
+                                        libs::sleep(100);
+                                        //libs::past_text(format!("目標寬數為 {} (right shift 下一步) :: ", _dest_cnt_w));
+                                        libs::past_text(format!("來源 {}, {}, 目標 {}, {}, 數量: {}, w: {}, h: {}, wc: {}, dwc: {} (right shift 下一步)", 
+                                            res_x.load(Ordering::Relaxed),
+                                            res_y.load(Ordering::Relaxed),
+                                            dest_x.load(Ordering::Relaxed),
+                                            dest_y.load(Ordering::Relaxed),
+                                            item_cnt.load(Ordering::Relaxed),
+                                            item_w.load(Ordering::Relaxed),
+                                            item_h.load(Ordering::Relaxed),
+                                            item_cnt_w.load(Ordering::Relaxed),
+                                            dest_cnt_w.load(Ordering::Relaxed)));
+
+                                        step.store(8, Ordering::Relaxed);
+                                    }
+                                    _ => {
+                                        is_end.store(true, Ordering::Relaxed);
+                                        Tools::line_text_clear();
+                                        libs::past_text("發生錯誤... 3 秒後退出 批次道具移動...");
+                                        libs::sleep(3000);
+                                        Tools::line_text_clear();
+                                        libs::KeyCode::Return.click();
+                                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                                    }
+                                }
+                            }
+                            8 => {
+                                is_end.store(true, Ordering::Relaxed);
+
+                                // 開始移動
+                                let base = item_dbase1.load(Ordering::Relaxed);
+                                let cnt = item_cnt.load(Ordering::Relaxed);
+                                let item_w = item_w.load(Ordering::Relaxed);
+                                let item_h = item_h.load(Ordering::Relaxed);
+                                let item_cnt_w = item_cnt_w.load(Ordering::Relaxed);
+                                let dest_cnt_w = dest_cnt_w.load(Ordering::Relaxed);
+
+                                let __res_x = res_x.load(Ordering::Relaxed);
+                                let __res_y = res_y.load(Ordering::Relaxed);
+                                let __dest_x = dest_x.load(Ordering::Relaxed);
+                                let __dest_y = dest_y.load(Ordering::Relaxed);
+
+                                let mut c_res_x = __res_x;
+                                let mut c_res_y = __res_y;
+                                let mut c_res_row = 0;
+                                let mut c_res_col = 0;
+
+                                let mut c_dest_x = __dest_x;
+                                let mut c_dest_y = __dest_y;
+                                let mut c_dest_row = 0;
+                                let mut c_dest_col = 0;
+
+                                for idx in 1..cnt {
+                                    libs::sleep(350);
+                                    //println!("f x: {}, y: {}", c_res_x, c_res_y);
+                                    let (dx, dy) = libs::convert_to_absolute(c_res_x, c_res_y);
+                                    libs::MouseEvent::click(dx, dy);
+
+                                    libs::sleep(350);
+                                    //println!("t x: {}, y: {}", c_dest_x, c_dest_y);
+                                    let (dx, dy) = libs::convert_to_absolute(c_dest_x, c_dest_y);
+                                    libs::MouseEvent::click(dx, dy);
+
+                                    c_res_col += 1;
+                                    c_dest_col += 1;
+                                    if c_res_col >= item_cnt_w {
+                                        c_res_row += 1;
+                                        c_res_col = 0;
+                                    }
+                                    if c_dest_col >= dest_cnt_w {
+                                        c_dest_row += 1;
+                                        c_dest_col = 0;
+                                    }
+                                    c_res_x = __res_x + (c_res_col * base * item_w);
+                                    c_res_y = __res_y + (c_res_row * base * item_h);
+                                    c_dest_x = __dest_x + (c_dest_col * base * item_w);
+                                    c_dest_y = __dest_y + (c_dest_row * base * item_h);
+                                }
+
+                                libs::sleep(500);
+                                return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+
+                            }
+                            _ => {
+                                is_end.store(true, Ordering::Relaxed);
+                                Tools::line_text_clear();
+                                libs::past_text("未知的狀態... 3 秒後退出 批次道具移動...");
+                                libs::sleep(3000);
+                                Tools::line_text_clear();
+                                libs::KeyCode::Return.click();
+                                return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                            }
+                        }
+                    }
+                    libs::KeyCode::Escape => {
+                        is_end.store(true, Ordering::Relaxed);
+                        Tools::line_text_clear();
+                        libs::past_text("3 秒後退出 批次道具移動...");
+                        libs::sleep(3000);
+                        Tools::line_text_clear();
+                        libs::KeyCode::Return.click();
+                        return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
+                    }
+                    _ => { }
+                }
             }
             (self.clone(), EventHandleReturn::CONTINUE)
         }
