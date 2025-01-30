@@ -1182,17 +1182,6 @@ mod ctrl {
             libs::sleep(100);
             libs::KeyCode::Backspace.click();
         }
-        pub fn line_text_cut_end_block() -> String {
-            libs::KeyCode::End.click();
-            libs::sleep(100);
-            libs::KeyCode::ControlLeft.down();
-            libs::sleep(100);
-            libs::KeyCode::LeftArrow.click();
-            libs::sleep(100);
-            libs::KeyCode::ControlLeft.up();
-
-            libs::cp_text_line_to_end()
-        }
     }
 
     #[allow(dead_code)]
@@ -1486,7 +1475,7 @@ mod ctrl {
             ItemMoveToState {
                 is_end: sync::Arc::new(AtomicBool::new(false)),
                 step: sync::Arc::new(AtomicI32::new(1)),
-                item_dbase1: sync::Arc::new(AtomicI32::new(20)),
+                item_dbase1: sync::Arc::new(AtomicI32::new(24)),
                 res_x: sync::Arc::new(AtomicI32::new(-1)),
                 res_y: sync::Arc::new(AtomicI32::new(-1)),
                 dest_x: sync::Arc::new(AtomicI32::new(-1)),
@@ -1559,13 +1548,13 @@ mod ctrl {
                                 libs::sleep(100);
                                 Tools::line_text_clear();
                                 libs::sleep(100);
-                                libs::past_text(format!("道具目標為 x: {}, y: {}, 輸入道具寬 (right shift 下一步) :: ", x, y));
+                                libs::past_text(format!("道具目標為 x: {}, y: {}, 輸入道具寬 (cursor 在數字前, right shift 下一步) :: ", x, y));
                                 step.store(3, Ordering::Relaxed);
                             }
                             3 => {
                                 // 道具寬
                                 libs::sleep(100);
-                                let _item_w = Tools::line_text_cut_end_block();
+                                let _item_w = libs::cp_text_line_to_end();
 
                                 match _item_w.parse::<i32>() {
                                     Ok(_int_item_w) => {
@@ -1573,7 +1562,7 @@ mod ctrl {
                                         libs::sleep(100);
                                         Tools::line_text_clear();
                                         libs::sleep(100);
-                                        libs::past_text(format!("道具寬為 {}, 輸入道具高 (right shift 下一步) :: ", _item_w));
+                                        libs::past_text(format!("道具寬為 {}, 輸入道具高 (cursor 在數字前, right shift 下一步) :: ", _item_w));
 
                                         step.store(4, Ordering::Relaxed);
                                     }
@@ -1585,7 +1574,7 @@ mod ctrl {
                             4 => {
                                 // 道具高
                                 libs::sleep(100);
-                                let _item_h = Tools::line_text_cut_end_block();
+                                let _item_h = libs::cp_text_line_to_end();
 
                                 match _item_h.parse::<i32>() {
                                     Ok(_int_item_h) => {
@@ -1593,7 +1582,7 @@ mod ctrl {
                                         libs::sleep(100);
                                         Tools::line_text_clear();
                                         libs::sleep(100);
-                                        libs::past_text(format!("道具高為 {}, 請輸入道具數 (right shift 下一步) :: ", _item_h));
+                                        libs::past_text(format!("道具高為 {}, 請輸入道具數 (cursor 在數字前, right shift 下一步) :: ", _item_h));
 
                                         step.store(5, Ordering::Relaxed);
                                     }
@@ -1605,7 +1594,7 @@ mod ctrl {
                             5 => {
                                 // 道具數
                                 libs::sleep(100);
-                                let _item_cnt = Tools::line_text_cut_end_block();
+                                let _item_cnt = libs::cp_text_line_to_end();
 
                                 match _item_cnt.parse::<i32>() {
                                     Ok(_int_item_cnt) => {
@@ -1613,7 +1602,7 @@ mod ctrl {
                                         libs::sleep(100);
                                         Tools::line_text_clear();
                                         libs::sleep(100);
-                                        libs::past_text(format!("道具數為 {}, 請輸入道具寬數 (right shift 下一步) :: ", _item_cnt));
+                                        libs::past_text(format!("道具數為 {}, 請輸入道具寬數 (cursor 在數字前, right shift 下一步) :: ", _item_cnt));
 
                                         step.store(6, Ordering::Relaxed);
                                     }
@@ -1625,7 +1614,7 @@ mod ctrl {
                             6 => {
                                 // 道具寬數
                                 libs::sleep(100);
-                                let _item_cnt_w = Tools::line_text_cut_end_block();
+                                let _item_cnt_w = libs::cp_text_line_to_end();
 
                                 match _item_cnt_w.parse::<i32>() {
                                     Ok(_int_item_cnt_w) => {
@@ -1633,7 +1622,7 @@ mod ctrl {
                                         libs::sleep(100);
                                         Tools::line_text_clear();
                                         libs::sleep(100);
-                                        libs::past_text(format!("道具寬數為 {}, 請輸入目標寬數 (right shift 下一步) :: ", _item_cnt_w));
+                                        libs::past_text(format!("道具寬數為 {}, 請輸入目標寬數 (cursor 在數字前, right shift 下一步) :: ", _item_cnt_w));
 
                                         step.store(7, Ordering::Relaxed);
                                     }
@@ -1645,7 +1634,7 @@ mod ctrl {
                             7 => {
                                 // 目標寬數
                                 libs::sleep(100);
-                                let _dest_cnt_w = Tools::line_text_cut_end_block();
+                                let _dest_cnt_w = libs::cp_text_line_to_end();
 
                                 match _dest_cnt_w.parse::<i32>() {
                                     Ok(_int_dest_cnt_w) => {
@@ -1698,15 +1687,19 @@ mod ctrl {
                                 let mut c_dest_row = 0;
                                 let mut c_dest_col = 0;
 
-                                for idx in 1..cnt {
+                                for idx in 0..cnt {
                                     libs::sleep(350);
                                     //println!("f x: {}, y: {}", c_res_x, c_res_y);
                                     let (dx, dy) = libs::convert_to_absolute(c_res_x, c_res_y);
+                                    libs::MouseEvent::Move{x: dx, y: dy}.do_it();
+                                    libs::sleep(80);
                                     libs::MouseEvent::click(dx, dy);
 
-                                    libs::sleep(350);
+                                    libs::sleep(150);
                                     //println!("t x: {}, y: {}", c_dest_x, c_dest_y);
                                     let (dx, dy) = libs::convert_to_absolute(c_dest_x, c_dest_y);
+                                    libs::MouseEvent::Move{x: dx, y: dy}.do_it();
+                                    libs::sleep(80);
                                     libs::MouseEvent::click(dx, dy);
 
                                     c_res_col += 1;
@@ -1725,7 +1718,7 @@ mod ctrl {
                                     c_dest_y = __dest_y + (c_dest_row * base * item_h);
                                 }
 
-                                libs::sleep(500);
+                                libs::sleep(150);
                                 return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
 
                             }
@@ -1822,12 +1815,31 @@ mod ctrl {
             let alt_btn = self.alt_btn.clone();
             let press = self.press.clone();
             match event {
+                // Alt
                 libs::KeyCode::Alt => {
                     if !alt_btn.load(Ordering::Relaxed) {
                         self.alt_btn.store(true, Ordering::Relaxed);
                     }
                     //return (self.clone(), EventHandleReturn::INTERCEPT);
                 }
+                // Alt + ` -> Shift + Tab
+                libs::KeyCode::BackQuote => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        libs::KeyCode::Alt.up();
+                        libs::sleep(10);
+                        libs::KeyCode::ShiftLeft.down();
+                        libs::sleep(10);
+                        libs::KeyCode::Tab.down();
+                        libs::sleep(10);
+                        libs::KeyCode::Tab.up();
+                        libs::sleep(10);
+                        libs::KeyCode::ShiftLeft.up();
+                        libs::sleep(10);
+                        libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                // Alt + 1 -> 6
                 libs::KeyCode::Num1 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num1")].store(true, Ordering::Relaxed);
@@ -1839,6 +1851,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + 2 -> 7
                 libs::KeyCode::Num2 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num2")].store(true, Ordering::Relaxed);
@@ -1850,6 +1863,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + 3 -> 8
                 libs::KeyCode::Num3 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num3")].store(true, Ordering::Relaxed);
@@ -1861,6 +1875,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + 4 -> 9
                 libs::KeyCode::Num4 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num4")].store(true, Ordering::Relaxed);
@@ -1872,6 +1887,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + 5 -> 0
                 libs::KeyCode::Num5 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num5")].store(true, Ordering::Relaxed);
@@ -1883,6 +1899,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + Q -> F5
                 libs::KeyCode::KeyQ => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyQ")].store(true, Ordering::Relaxed);
@@ -1894,6 +1911,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + W -> F6
                 libs::KeyCode::KeyW => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyW")].store(true, Ordering::Relaxed);
@@ -1905,6 +1923,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + E -> F7
                 libs::KeyCode::KeyE => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyE")].store(true, Ordering::Relaxed);
@@ -1916,6 +1935,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + R -> F8
                 libs::KeyCode::KeyR => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyR")].store(true, Ordering::Relaxed);
@@ -1927,6 +1947,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + A -> F9
                 libs::KeyCode::KeyA => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyA")].store(true, Ordering::Relaxed);
@@ -1938,6 +1959,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + S -> F10
                 libs::KeyCode::KeyS => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyS")].store(true, Ordering::Relaxed);
@@ -1949,6 +1971,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + D -> F11
                 libs::KeyCode::KeyD => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyD")].store(true, Ordering::Relaxed);
@@ -1960,6 +1983,7 @@ mod ctrl {
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
+                // Alt + F -> F12
                 libs::KeyCode::KeyF => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyF")].store(true, Ordering::Relaxed);
@@ -2100,7 +2124,9 @@ mod ctrl {
     pub struct Context { state: Arc<dyn State> }
     impl Context {
         pub fn new() -> Context {
-            let init_state = Arc::new(WaitingState::new());
+            // 預設的模式
+          //let init_state = Arc::new(WaitingState::new()); // 等待模式
+            let init_state = Arc::new(FingingState::new()); // 戰鬥模式
             init_state.clone().enter();
             Context { state: init_state.clone() }
         }
