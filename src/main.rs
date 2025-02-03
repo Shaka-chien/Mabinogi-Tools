@@ -1286,7 +1286,7 @@ mod ctrl {
                 }
                 libs::KeyCode::KeyB => {
                     if self.flag.get() {
-                        return (Arc::new(FingingState::new()), EventHandleReturn::CONTINUE);
+                        return (Arc::new(FingingState::new(false)), EventHandleReturn::CONTINUE);
                     }
                 }
                 libs::KeyCode::KeyQ => {
@@ -1751,11 +1751,12 @@ mod ctrl {
 
     // --- 戰鬥狀態(alt 1~5 ==> 6~0, alt qwer ==> F5~F8, alt asdf ==> F9~F12) ---
     pub struct FingingState {
+        skip_enter: sync::Arc<AtomicBool>,
         alt_btn: sync::Arc<AtomicBool>,
         press: sync::Arc<HashMap<String,AtomicBool>>,
     }
     impl FingingState {
-        fn new() -> FingingState {
+        fn new(skip_enter: bool) -> FingingState {
             let mut press: HashMap<String,AtomicBool> = HashMap::new();
             press.insert(String::from("Num1"), AtomicBool::new(false));
             press.insert(String::from("Num2"), AtomicBool::new(false));
@@ -1771,6 +1772,7 @@ mod ctrl {
             press.insert(String::from("KeyD"), AtomicBool::new(false));
             press.insert(String::from("KeyF"), AtomicBool::new(false));
             FingingState {
+                skip_enter: sync::Arc::new(AtomicBool::new(skip_enter)),
                 alt_btn: sync::Arc::new(AtomicBool::new(false)),
                 press: sync::Arc::new(press),
             }
@@ -1778,6 +1780,10 @@ mod ctrl {
     }
     impl State for FingingState {
         fn enter(self: Arc<Self>) {
+            let skip_enter = self.skip_enter.clone();
+            if skip_enter.load(Ordering::Relaxed) {
+                return;
+            }
             // 若下面的對話框開著, 則戰鬥時按下 shift 會沒作用, 故需關閉下方對話框
             libs::past_text("戰鬥狀態開始..., 0.5 秒後關閉此對話框, Right Ctrl 回到 WaitingState");
             libs::sleep(500);
@@ -2125,8 +2131,8 @@ mod ctrl {
     impl Context {
         pub fn new() -> Context {
             // 預設的模式
-            let init_state = Arc::new(WaitingState::new()); // 等待模式
-          //let init_state = Arc::new(FingingState::new()); // 戰鬥模式
+          //let init_state = Arc::new(WaitingState::new()); // 等待模式
+            let init_state = Arc::new(FingingState::new(true)); // 戰鬥模式
             init_state.clone().enter();
             Context { state: init_state.clone() }
         }
