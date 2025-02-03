@@ -1,3 +1,4 @@
+// keyboard mouse api library
 mod km_libs {
     extern crate winapi;
     use winapi::um::winuser::{
@@ -1156,8 +1157,47 @@ mod km_libs {
     }
 }
 
+// screen api library
+mod sc_libs {
+    use xcap::{
+        Monitor,
+        image::Pixel,
+    };
+
+    #[allow(dead_code)]
+    fn normalized(filename: &str) -> String {
+        filename
+            .replace("|", "")
+            .replace("\\", "")
+            .replace(":", "")
+            .replace("/", "")
+    }
+
+    pub fn get_rgb(x: u32, y: u32) -> Option<(u8, u8, u8)> {
+        let monitors = Monitor::all().unwrap();
+        for monitor in monitors {
+            let image = monitor.capture_image().unwrap();
+            let (width, height) = image.dimensions();
+
+            // x, y 為絕對座標, 此處還原為 monitor 的相對座標
+            let x = (x as i32) - monitor.x();
+            let y = (y as i32) - monitor.y();
+            if x > (width as i32) || y > (height as i32) {
+                // 超過範圍, 找下一個 monitor
+                continue;
+            }
+
+            // println!("{}: dimensions: {:?}, x: {}, y: {}", normalized(monitor.name()), (width, height), monitor.x(), monitor.y());
+            let rgb = image.get_pixel(x as u32, y as u32).to_rgb();
+            return Some((rgb[0], rgb[1], rgb[2]));
+        }
+        return None;
+    }
+}
+
 mod ctrl {
     use crate::km_libs;
+    use crate::sc_libs;
     use std::{
         cell::Cell,
         sync,
@@ -1243,6 +1283,9 @@ mod ctrl {
         }
     }
     impl State for WaitingState {
+        fn enter(self: Arc<Self>) {
+            println!("等待模式開始... Right Ctrl 開啟功能");
+        }
         fn out(self: Arc<Self>) {
             km_libs::sleep(200);
             km_libs::KeyCode::End.click();
@@ -1324,8 +1367,15 @@ mod ctrl {
     }
     impl State for MousePositionState {
         fn enter(self: Arc<Self>) {
+            println!("取得滑鼠位置資訊開始...");
             let (x, y) = km_libs::MouseEvent::get_mouse_position0();
-            km_libs::past_text(format!("當前滑鼠位置為 x: {}, y: {}, esc 回到 WaitingState", x, y));
+            match sc_libs::get_rgb(x as u32, y as u32) {
+                Some((r, g, b)) => {
+                    //println!("座標 x: {}, y: {}, rgb: ({}, {}, {})", x, y, r, g, b);
+                    km_libs::past_text(format!("滑鼠座標: ({}, {}), rgb: ({}, {}, {}), esc 回到 WaitingState", x, y, r, g, b));
+                }
+                _ => {}
+            }
         }
         fn out(self: Arc<Self>) {
             km_libs::KeyCode::End.click();
@@ -1374,6 +1424,7 @@ mod ctrl {
     }
     impl State for MouseClicksState {
         fn enter(self: Arc<Self>) {
+            println!("滑鼠連點開始...");
             let alive = self.alive.clone();
             let r_mouse_btn = self.r_mouse_btn.clone();
             let dx = self.dx.clone();
@@ -1499,6 +1550,7 @@ mod ctrl {
     }
     impl State for ItemMoveToState {
         fn enter(self: Arc<Self>) {
+            println!("批次道具移動開始...");
             km_libs::past_text(format!("批次道具移動, 請移動到道具來源處, 並按下 right shift 進行下一步"));
         }
         fn out(self: Arc<Self>) {
@@ -1780,6 +1832,7 @@ mod ctrl {
     }
     impl State for FingingState {
         fn enter(self: Arc<Self>) {
+            println!("戰鬥狀態開始..., Right Ctrl 回到 WaitingState");
             let skip_enter = self.skip_enter.clone();
             if skip_enter.load(Ordering::Relaxed) {
                 return;
@@ -2120,6 +2173,7 @@ mod ctrl {
     }
     impl State for ExitState {
         fn enter(self: Arc<Self>) {
+            println!("程式已退出");
             km_libs::past_text("程式已退出");
             km_libs::exit();
         }
@@ -2218,6 +2272,17 @@ mod ctrl {
         handle01.join().unwrap(); // 等待執行緒結束
         handle02.join().unwrap(); // 等待執行緒結束
     }
+
+    #[allow(dead_code)]
+    pub fn test03_get_mouse_info() {
+        let (x, y) = km_libs::MouseEvent::get_mouse_position0();
+        match sc_libs::get_rgb(x as u32, y as u32) {
+            Some((r, g, b)) => {
+                println!("座標 x: {}, y: {}, rgb: ({}, {}, {})", x, y, r, g, b);
+            }
+            _ => {}
+        }
+    }
 }
 
 fn main() {
@@ -2233,4 +2298,5 @@ fn main() {
     //ctrl::test01_copy_to_end();
     //ctrl::test02_mask_testing();
     //ctrl::test02_test_simulate_detail();
+    //ctrl::test03_get_mouse_info();
 }
