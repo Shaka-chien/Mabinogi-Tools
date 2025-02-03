@@ -2125,8 +2125,8 @@ mod ctrl {
     impl Context {
         pub fn new() -> Context {
             // 預設的模式
-          //let init_state = Arc::new(WaitingState::new()); // 等待模式
-            let init_state = Arc::new(FingingState::new()); // 戰鬥模式
+            let init_state = Arc::new(WaitingState::new()); // 等待模式
+          //let init_state = Arc::new(FingingState::new()); // 戰鬥模式
             init_state.clone().enter();
             Context { state: init_state.clone() }
         }
