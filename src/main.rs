@@ -54,7 +54,7 @@ mod km_libs {
         };
         unsafe {
             let ki = input.u.ki_mut();
-            ki.wVk = code.try_into().unwrap();
+            ki.wVk = code as u16;
             ki.wScan = scan_code;
             ki.dwFlags = 0; // 按下鍵
             ki.dwFlags = ki.dwFlags | flags_ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
@@ -70,7 +70,7 @@ mod km_libs {
         };
         unsafe {
             let ki = input.u.ki_mut();
-            ki.wVk = code.try_into().unwrap();
+            ki.wVk = code as u16;
             ki.wScan = scan_code;
             ki.dwFlags = KEYEVENTF_KEYUP; // 放開鍵
             ki.dwFlags = ki.dwFlags | flags_ext; // https://stackoverflow.com/questions/44924962/sendinput-on-c-doesnt-take-ctrl-and-shift-in-account
@@ -1176,7 +1176,7 @@ mod sc_libs {
     pub fn get_rgb(x: u32, y: u32) -> Option<(u8, u8, u8)> {
         let monitors = Monitor::all().unwrap();
         for monitor in monitors {
-            let image = monitor.capture_image().unwrap();
+            let image = monitor.capture_image().unwrap(); // image::RgbaImage
             let (width, height) = image.dimensions();
 
             // x, y 為絕對座標, 此處還原為 monitor 的相對座標
@@ -1188,7 +1188,7 @@ mod sc_libs {
             }
 
             // println!("{}: dimensions: {:?}, x: {}, y: {}", normalized(monitor.name()), (width, height), monitor.x(), monitor.y());
-            let rgb = image.get_pixel(x as u32, y as u32).to_rgb();
+            let rgb = image.get_pixel(x as u32, y as u32).to_rgb(); // image::Rgba -> image::Rgb
             return Some((rgb[0], rgb[1], rgb[2]));
         }
         return None;
