@@ -1206,6 +1206,7 @@ mod ctrl {
             AtomicBool, AtomicI32, Ordering
         },
         sync::Arc,
+        sync::mpsc,
         collections::HashMap,
     };
 
@@ -1233,8 +1234,10 @@ mod ctrl {
     // --- 狀態 ---
     #[allow(dead_code)]
     pub trait State {
-        fn enter(self: Arc<Self>) {}
-        fn out(self: Arc<Self>) {}
+        #[allow(unused_variables)]
+        fn enter(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {}
+        #[allow(unused_variables)]
+        fn out(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {}
 
         // 遇到程式摸擬的 鍵盤/滑鼠 事件, 是否要靜聲(不處理事件)
         fn mute_event_when_simulate(self: Arc<Self>) -> bool { true }
@@ -1242,14 +1245,14 @@ mod ctrl {
         fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn);
 
         #[allow(unused_variables)]
-        fn do_event(self: Arc<Self>, event: km_libs::Event) -> (Arc<dyn State>, EventHandleReturn) {
+        fn do_event(self: Arc<Self>, event: km_libs::Event, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 km_libs::Event::Mouse(event, detail) => {
                     let mouse_simulate_mask = 1;
                     if self.clone().mute_event_when_simulate() && (detail.flags & mouse_simulate_mask) == mouse_simulate_mask {
                         return self.do_event_when_mute();
                     }
-                    self.do_mouse_event(event)
+                    self.do_mouse_event(event, tx)
                 }
                 km_libs::Event::Keyboard(event, act, detail) => {
                     let keyboard_simulate_mask = 0x10;
@@ -1257,21 +1260,21 @@ mod ctrl {
                         return self.do_event_when_mute();
                     }
                     match act {
-                        km_libs::ButtonAction::Down => { self.do_keyboard_down(event) }
-                        km_libs::ButtonAction::Up => { self.do_keyboard_up(event) }
+                        km_libs::ButtonAction::Down => { self.do_keyboard_down(event, tx) }
+                        km_libs::ButtonAction::Up => { self.do_keyboard_up(event, tx) }
                     }
                 }
             }
         }
 
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Arc<Self>, event: km_libs::MouseEvent) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
+        fn do_mouse_event(self: Arc<Self>, event: km_libs::MouseEvent, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
 
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Arc<Self>, event: km_libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
+        fn do_keyboard_down(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
 
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
+        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) { self.do_event_when_mute() }
     }
 
     // --- 等待(入口) ---
@@ -1283,10 +1286,12 @@ mod ctrl {
         }
     }
     impl State for WaitingState {
-        fn enter(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn enter(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             println!("等待模式開始... Right Ctrl 開啟功能");
         }
-        fn out(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn out(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             km_libs::sleep(200);
             km_libs::KeyCode::End.click();
             km_libs::sleep(100);
@@ -1301,7 +1306,7 @@ mod ctrl {
         }
         fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 km_libs::KeyCode::ControlRight => {
                     if !self.flag.get() {
@@ -1366,7 +1371,8 @@ mod ctrl {
         fn new() -> MousePositionState { MousePositionState {} }
     }
     impl State for MousePositionState {
-        fn enter(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn enter(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             println!("取得滑鼠位置資訊開始...");
             let (x, y) = km_libs::MouseEvent::get_mouse_position0();
             match sc_libs::get_rgb(x as u32, y as u32) {
@@ -1377,7 +1383,8 @@ mod ctrl {
                 _ => {}
             }
         }
-        fn out(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn out(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             km_libs::KeyCode::End.click();
             km_libs::sleep(100);
             km_libs::KeyCode::ShiftLeft.down();
@@ -1392,7 +1399,7 @@ mod ctrl {
         }
         fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 km_libs::KeyCode::Escape => {
                     return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
@@ -1423,7 +1430,8 @@ mod ctrl {
         }
     }
     impl State for MouseClicksState {
-        fn enter(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn enter(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             println!("滑鼠連點開始...");
             let alive = self.alive.clone();
             let r_mouse_btn = self.r_mouse_btn.clone();
@@ -1447,7 +1455,8 @@ mod ctrl {
                 })));
             }
         }
-        fn out(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn out(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             km_libs::sleep(50);
             km_libs::KeyCode::Return.click();
             km_libs::sleep(100);
@@ -1465,7 +1474,7 @@ mod ctrl {
         }
         fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_mouse_event(self: Arc<Self>, event: km_libs::MouseEvent) -> (Arc<dyn State>, EventHandleReturn) {
+        fn do_mouse_event(self: Arc<Self>, event: km_libs::MouseEvent, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             let dx = self.dx.clone();
             let dy = self.dy.clone();
             match event {
@@ -1485,7 +1494,7 @@ mod ctrl {
             (self.clone(), EventHandleReturn::CONTINUE)
         }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             match event {
                 km_libs::KeyCode::Escape => {
                     self.alive.store(false, Ordering::Relaxed);
@@ -1549,11 +1558,13 @@ mod ctrl {
         }
     }
     impl State for ItemMoveToState {
-        fn enter(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn enter(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             println!("批次道具移動開始...");
             km_libs::past_text(format!("批次道具移動, 請移動到道具來源處, 並按下 right shift 進行下一步"));
         }
-        fn out(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn out(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             km_libs::KeyCode::Return.click();
             km_libs::sleep(100);
             Tools::line_text_clear();
@@ -1562,7 +1573,7 @@ mod ctrl {
         }
         fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             let is_end      = self.is_end.clone();
             let step        = self.step.clone();
             let item_dbase1 = self.item_dbase1.clone();
@@ -1842,7 +1853,8 @@ mod ctrl {
         }
     }
     impl State for FingingState {
-        fn enter(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn enter(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             println!("戰鬥狀態開始..., Right Ctrl 回到 WaitingState");
             let skip_enter = self.skip_enter.clone();
             if skip_enter.load(Ordering::Relaxed) {
@@ -1863,7 +1875,8 @@ mod ctrl {
             km_libs::sleep(100);
             km_libs::KeyCode::Return.click();
         }
-        fn out(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn out(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             km_libs::sleep(50);
             km_libs::KeyCode::Return.click();
             km_libs::sleep(100);
@@ -1881,7 +1894,7 @@ mod ctrl {
         }
         fn do_event_when_mute(self: Arc<Self>) -> (Arc<dyn State>, EventHandleReturn) { (self.clone(), EventHandleReturn::CONTINUE) }
         #[allow(unused_variables)]
-        fn do_keyboard_down(self: Arc<Self>, event: km_libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_down(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             let alt_btn = self.alt_btn.clone();
             let press = self.press.clone();
             match event {
@@ -1895,17 +1908,19 @@ mod ctrl {
                 // Alt + ` -> Shift + Tab
                 km_libs::KeyCode::BackQuote => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(10);
-                        km_libs::KeyCode::ShiftLeft.down();
-                        km_libs::sleep(10);
-                        km_libs::KeyCode::Tab.down();
-                        km_libs::sleep(10);
-                        km_libs::KeyCode::Tab.up();
-                        km_libs::sleep(10);
-                        km_libs::KeyCode::ShiftLeft.up();
-                        km_libs::sleep(10);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(10);
+                            km_libs::KeyCode::ShiftLeft.down();
+                            km_libs::sleep(10);
+                            km_libs::KeyCode::Tab.down();
+                            km_libs::sleep(10);
+                            km_libs::KeyCode::Tab.up();
+                            km_libs::sleep(10);
+                            km_libs::KeyCode::ShiftLeft.up();
+                            km_libs::sleep(10);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -1913,11 +1928,13 @@ mod ctrl {
                 km_libs::KeyCode::Num1 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num1")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num6.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num6.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -1925,11 +1942,13 @@ mod ctrl {
                 km_libs::KeyCode::Num2 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num2")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num7.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num7.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -1937,11 +1956,13 @@ mod ctrl {
                 km_libs::KeyCode::Num3 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num3")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num8.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num8.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -1949,11 +1970,13 @@ mod ctrl {
                 km_libs::KeyCode::Num4 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num4")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num9.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num9.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -1961,11 +1984,13 @@ mod ctrl {
                 km_libs::KeyCode::Num5 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num5")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num0.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num0.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -1973,11 +1998,13 @@ mod ctrl {
                 km_libs::KeyCode::F1 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("F1")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Minus.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Minus.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -1985,45 +2012,51 @@ mod ctrl {
                 km_libs::KeyCode::F2 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("F2")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Equal.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Equal.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 // Alt + F3 -> 3152
                 km_libs::KeyCode::F3 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num3.click();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num1.click();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num5.click();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num2.click();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num3.click();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num1.click();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num5.click();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num2.click();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 // Alt + F4 -> 5231
                 km_libs::KeyCode::F4 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num5.click();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num2.click();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num3.click();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Num1.click();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num5.click();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num2.click();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num3.click();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Num1.click();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2031,11 +2064,13 @@ mod ctrl {
                 km_libs::KeyCode::KeyQ => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyQ")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::F5.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::F5.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2043,11 +2078,13 @@ mod ctrl {
                 km_libs::KeyCode::KeyW => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyW")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::F6.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::F6.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2055,11 +2092,13 @@ mod ctrl {
                 km_libs::KeyCode::KeyE => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyE")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::F7.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::F7.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2067,11 +2106,13 @@ mod ctrl {
                 km_libs::KeyCode::KeyR => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyR")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::F8.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::F8.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2079,11 +2120,13 @@ mod ctrl {
                 km_libs::KeyCode::KeyA => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyA")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::F9.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::F9.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2091,11 +2134,13 @@ mod ctrl {
                 km_libs::KeyCode::KeyS => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyS")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::F10.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::F10.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2103,11 +2148,13 @@ mod ctrl {
                 km_libs::KeyCode::KeyD => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyD")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::F11.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::F11.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2115,11 +2162,13 @@ mod ctrl {
                 km_libs::KeyCode::KeyF => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyF")].store(true, Ordering::Relaxed);
-                        km_libs::KeyCode::Alt.up();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::F12.down();
-                        km_libs::sleep(20);
-                        km_libs::KeyCode::Alt.down();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Alt.up();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::F12.down();
+                            km_libs::sleep(20);
+                            km_libs::KeyCode::Alt.down();
+                        })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
@@ -2128,7 +2177,7 @@ mod ctrl {
             (self.clone(), EventHandleReturn::CONTINUE)
         }
         #[allow(unused_variables)]
-        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode) -> (Arc<dyn State>, EventHandleReturn) {
+        fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             let alt_btn = self.alt_btn.clone();
             let press = self.press.clone();
             match event {
@@ -2136,109 +2185,143 @@ mod ctrl {
                     return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
                 }
                 km_libs::KeyCode::Alt => {
+                    tx.send(Box::new(|| {
+                        // alt up 可多發沒關係, 確保放開 alt 時能確實放開
+                        km_libs::KeyCode::Alt.up();
+                    })).unwrap();
                     self.alt_btn.store(false, Ordering::Relaxed);
                 }
                 km_libs::KeyCode::Num1 => {
                     if press[&String::from("Num1")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Num6.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Num6.up();
+                        })).unwrap();
                         press[&String::from("Num1")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::Num2 => {
                     if press[&String::from("Num2")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Num7.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Num7.up();
+                        })).unwrap();
                         press[&String::from("Num2")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::Num3 => {
                     if press[&String::from("Num3")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Num8.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Num8.up();
+                        })).unwrap();
                         press[&String::from("Num3")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::Num4 => {
                     if press[&String::from("Num4")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Num9.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Num9.up();
+                        })).unwrap();
                         press[&String::from("Num4")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::Num5 => {
                     if press[&String::from("Num5")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Num0.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Num0.up();
+                        })).unwrap();
                         press[&String::from("Num5")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::F1 => {
                     if press[&String::from("F1")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Minus.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Minus.up();
+                        })).unwrap();
                         press[&String::from("F1")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::F2 => {
                     if press[&String::from("F2")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::Equal.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::Equal.up();
+                        })).unwrap();
                         press[&String::from("F2")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::KeyQ => {
                     if press[&String::from("KeyQ")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::F5.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::F5.up();
+                        })).unwrap();
                         press[&String::from("KeyQ")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::KeyW => {
                     if press[&String::from("KeyW")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::F6.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::F6.up();
+                        })).unwrap();
                         press[&String::from("KeyW")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::KeyE => {
                     if press[&String::from("KeyE")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::F7.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::F7.up();
+                        })).unwrap();
                         press[&String::from("KeyE")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::KeyR => {
                     if press[&String::from("KeyR")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::F8.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::F8.up();
+                        })).unwrap();
                         press[&String::from("KeyR")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::KeyA => {
                     if press[&String::from("KeyA")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::F9.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::F9.up();
+                        })).unwrap();
                         press[&String::from("KeyA")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::KeyS => {
                     if press[&String::from("KeyS")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::F10.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::F10.up();
+                        })).unwrap();
                         press[&String::from("KeyS")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::KeyD => {
                     if press[&String::from("KeyD")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::F11.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::F11.up();
+                        })).unwrap();
                         press[&String::from("KeyD")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
                 km_libs::KeyCode::KeyF => {
                     if press[&String::from("KeyF")].load(Ordering::Relaxed) {
-                        km_libs::KeyCode::F12.up();
+                        tx.send(Box::new(|| {
+                            km_libs::KeyCode::F12.up();
+                        })).unwrap();
                         press[&String::from("KeyF")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2255,7 +2338,8 @@ mod ctrl {
         fn new() -> ExitState { ExitState {} }
     }
     impl State for ExitState {
-        fn enter(self: Arc<Self>) {
+        #[allow(unused_variables)]
+        fn enter(self: Arc<Self>, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) {
             println!("程式已退出");
             km_libs::past_text("程式已退出");
             km_libs::exit();
@@ -2264,19 +2348,37 @@ mod ctrl {
     }
 
     // --- Context ---
-    pub struct Context { state: Arc<dyn State> }
+    pub struct Context {
+        state: Arc<dyn State>,
+        tx: mpsc::Sender<Box<dyn FnOnce() + Send>>,
+    }
     impl Context {
         pub fn new() -> Context {
+            let (tx, rx) = mpsc::channel::<Box<dyn FnOnce() + Send>>();
+            thread::spawn(move || {
+                loop {
+                    let result = rx.recv();
+                    match result {
+                        Ok(action) => {
+                            action();
+                        },
+                        Err(_err) => {
+                            eprintln!("thread error ...");
+                        },
+                    }
+                }
+            });
+
             // 預設的模式
           //let init_state = Arc::new(WaitingState::new()); // 等待模式
             let init_state = Arc::new(FingingState::new(true)); // 戰鬥模式
-            init_state.clone().enter();
-            Context { state: init_state.clone() }
+            init_state.clone().enter(tx.clone());
+            Context { state: init_state.clone(), tx: tx }
         }
         
         pub fn event_callback(&mut self, event: km_libs::Event) -> Option<isize> {
             let state = Arc::clone(&self.state);
-            let (next_state, evt_hdl_rtn) = state.do_event(event);
+            let (next_state, evt_hdl_rtn) = state.do_event(event, self.tx.clone());
             self.state_change(next_state);
             match evt_hdl_rtn {
                 EventHandleReturn::INTERCEPT => Some(1), // 欄截系統事件, 不向程式發送
@@ -2286,9 +2388,9 @@ mod ctrl {
     
         fn state_change(&mut self, next_state: Arc<dyn State>) {
             if !Arc::ptr_eq(&self.state, &next_state) {
-                self.state.clone().out();
+                self.state.clone().out(self.tx.clone());
                 self.state = next_state;
-                self.state.clone().enter();
+                self.state.clone().enter(self.tx.clone());
             }
         }
     }
