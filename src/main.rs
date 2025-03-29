@@ -1801,7 +1801,16 @@ mod ctrl {
         }
     }
 
-    // --- 戰鬥狀態(alt 1~5 ==> 6~0, alt qwer ==> F5~F8, alt asdf ==> F9~F12) ---
+    /* --- 戰鬥狀態 ---
+     * Alt + 1~5 ==> 6~0
+     * Alt + F1 ==> -
+     * Alt + F2 ==> =
+     * Alt + F3 ==> 3152
+     * Alt + F4 ==> 5231
+     * Alt + + `  ==> Shift + Tab
+     * Alt + QWER ==> F5~F8
+     * Alt + ASDF ==> F9~F12)
+     */
     pub struct FingingState {
         skip_enter: sync::Arc<AtomicBool>,
         alt_btn: sync::Arc<AtomicBool>,
@@ -1815,6 +1824,8 @@ mod ctrl {
             press.insert(String::from("Num3"), AtomicBool::new(false));
             press.insert(String::from("Num4"), AtomicBool::new(false));
             press.insert(String::from("Num5"), AtomicBool::new(false));
+            press.insert(String::from("F1"), AtomicBool::new(false));
+            press.insert(String::from("F2"), AtomicBool::new(false));
             press.insert(String::from("KeyQ"), AtomicBool::new(false));
             press.insert(String::from("KeyW"), AtomicBool::new(false));
             press.insert(String::from("KeyE"), AtomicBool::new(false));
@@ -1953,6 +1964,64 @@ mod ctrl {
                         km_libs::KeyCode::Alt.up();
                         km_libs::sleep(20);
                         km_libs::KeyCode::Num0.down();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                // Alt + F1 -> -
+                km_libs::KeyCode::F1 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("F1")].store(true, Ordering::Relaxed);
+                        km_libs::KeyCode::Alt.up();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Minus.down();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                // Alt + F2 -> =
+                km_libs::KeyCode::F2 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        press[&String::from("F2")].store(true, Ordering::Relaxed);
+                        km_libs::KeyCode::Alt.up();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Equal.down();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                // Alt + F3 -> 3152
+                km_libs::KeyCode::F3 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        km_libs::KeyCode::Alt.up();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Num3.click();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Num1.click();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Num5.click();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Num2.click();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Alt.down();
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                // Alt + F4 -> 5231
+                km_libs::KeyCode::F4 => {
+                    if alt_btn.load(Ordering::Relaxed) {
+                        km_libs::KeyCode::Alt.up();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Num5.click();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Num2.click();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Num3.click();
+                        km_libs::sleep(20);
+                        km_libs::KeyCode::Num1.click();
                         km_libs::sleep(20);
                         km_libs::KeyCode::Alt.down();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2101,6 +2170,20 @@ mod ctrl {
                     if press[&String::from("Num5")].load(Ordering::Relaxed) {
                         km_libs::KeyCode::Num0.up();
                         press[&String::from("Num5")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                km_libs::KeyCode::F1 => {
+                    if press[&String::from("F1")].load(Ordering::Relaxed) {
+                        km_libs::KeyCode::Minus.up();
+                        press[&String::from("F1")].store(false, Ordering::Relaxed);
+                        return (self.clone(), EventHandleReturn::INTERCEPT);
+                    }
+                }
+                km_libs::KeyCode::F2 => {
+                    if press[&String::from("F2")].load(Ordering::Relaxed) {
+                        km_libs::KeyCode::Equal.up();
+                        press[&String::from("F2")].store(false, Ordering::Relaxed);
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
                 }
