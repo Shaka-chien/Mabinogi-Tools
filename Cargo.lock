@@ -614,6 +614,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mabinogi-tools"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clipboard",
+ "winapi",
+ "xcap",
+]
+
+[[package]]
 name = "malloc_buf"
 version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1020,16 +1030,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb5b1b31579f3811bf615c144393417496f152e12ac8b7663bf664f4a815306d"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "shaka_pc_ctrl_tools"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "clipboard",
- "winapi",
- "xcap",
 ]
 
 [[package]]
