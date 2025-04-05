@@ -5,7 +5,7 @@
     - 相信有不少覺得瑪奇遊戲的技能繁多，戰鬥按鍵要如何配置而困擾，本專案提供僅使用左手，並且不需大幅移動，就能使用按鍵 1234567890 與 F1~F12
 
 - 如何啟動？
-    - 下載 release 檔案
+    - 到 https://github.com/Shaka-chien/Mabinogi-Tools/releases 下載 `mabinogi-tools.exe` 檔案
     - 右鍵該執行檔，使用系統管理員執行
         - ![](./imgs/2025-04-05%2017%2020%2023.png)
 
