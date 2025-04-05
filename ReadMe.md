@@ -8,6 +8,9 @@
     - 到 https://github.com/Shaka-chien/Mabinogi-Tools/releases 下載 `mabinogi-tools.exe` 檔案
     - 右鍵該執行檔，使用系統管理員執行
         - ![](./imgs/2025-04-05%2017%2020%2023.png)
+    - 出現警告時，依以下操作即可開啟程式
+        - ![](./imgs/2025-04-05%2022%2038%2017.png)
+        - ![](./imgs/2025-04-05%2022%2038%2031.png)
 
 - 功能(戰鬥模式 `FingingState`)
     - 使用 `ALT` + `12345` 相當於按下 `67890` (EX: `ALT` + `1` = `6`, `ALT` + `2` = `7`, 以此類推)
