@@ -1,5 +1,5 @@
 [package]
-name = "shaka_pc_ctrl_tools"
+name = "mabinogi-tools"
 version = "0.1.0"
 edition = "2021"
 
