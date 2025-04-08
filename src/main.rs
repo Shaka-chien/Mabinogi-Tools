@@ -1897,6 +1897,7 @@ mod ctrl {
         fn do_keyboard_down(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             let alt_btn = self.alt_btn.clone();
             let press = self.press.clone();
+            const SLEEP_MINISEC: u64 = 10;
             match event {
                 // Alt
                 km_libs::KeyCode::Alt => {
@@ -1910,15 +1911,15 @@ mod ctrl {
                     if alt_btn.load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(10);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::ShiftLeft.down();
-                            km_libs::sleep(10);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Tab.down();
-                            km_libs::sleep(10);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Tab.up();
-                            km_libs::sleep(10);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::ShiftLeft.up();
-                            km_libs::sleep(10);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1930,9 +1931,9 @@ mod ctrl {
                         press[&String::from("Num1")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num6.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1944,9 +1945,9 @@ mod ctrl {
                         press[&String::from("Num2")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num7.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1958,9 +1959,9 @@ mod ctrl {
                         press[&String::from("Num3")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num8.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1972,9 +1973,9 @@ mod ctrl {
                         press[&String::from("Num4")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num9.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -1986,9 +1987,9 @@ mod ctrl {
                         press[&String::from("Num5")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num0.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2000,9 +2001,9 @@ mod ctrl {
                         press[&String::from("F1")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Minus.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2014,9 +2015,9 @@ mod ctrl {
                         press[&String::from("F2")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Equal.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2027,15 +2028,15 @@ mod ctrl {
                     if alt_btn.load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num3.click();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num1.click();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num5.click();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num2.click();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2046,15 +2047,15 @@ mod ctrl {
                     if alt_btn.load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num5.click();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num2.click();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num3.click();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num1.click();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2066,9 +2067,9 @@ mod ctrl {
                         press[&String::from("KeyQ")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F5.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2080,9 +2081,9 @@ mod ctrl {
                         press[&String::from("KeyW")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F6.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2094,9 +2095,9 @@ mod ctrl {
                         press[&String::from("KeyE")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F7.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2108,9 +2109,9 @@ mod ctrl {
                         press[&String::from("KeyR")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F8.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2122,9 +2123,9 @@ mod ctrl {
                         press[&String::from("KeyA")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F9.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2136,9 +2137,9 @@ mod ctrl {
                         press[&String::from("KeyS")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F10.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2150,9 +2151,9 @@ mod ctrl {
                         press[&String::from("KeyD")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F11.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
@@ -2164,9 +2165,9 @@ mod ctrl {
                         press[&String::from("KeyF")].store(true, Ordering::Relaxed);
                         tx.send(Box::new(|| {
                             km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F12.down();
-                            km_libs::sleep(20);
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Alt.down();
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
