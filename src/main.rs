@@ -1906,35 +1906,18 @@ mod ctrl {
                     }
                     //return (self.clone(), EventHandleReturn::INTERCEPT);
                 }
-                // Alt + ` -> Shift + Tab
-                km_libs::KeyCode::BackQuote => {
-                    if alt_btn.load(Ordering::Relaxed) {
-                        tx.send(Box::new(|| {
-                            km_libs::KeyCode::Alt.up();
-                            km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::ShiftLeft.down();
-                            km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Tab.down();
-                            km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Tab.up();
-                            km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::ShiftLeft.up();
-                            km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
-                        })).unwrap();
-                        return (self.clone(), EventHandleReturn::INTERCEPT);
-                    }
-                }
                 // Alt + 1 -> 6
                 km_libs::KeyCode::Num1 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num1")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num6.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -1943,12 +1926,14 @@ mod ctrl {
                 km_libs::KeyCode::Num2 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num2")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num7.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -1957,12 +1942,14 @@ mod ctrl {
                 km_libs::KeyCode::Num3 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num3")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num8.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -1971,12 +1958,14 @@ mod ctrl {
                 km_libs::KeyCode::Num4 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num4")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num9.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -1985,12 +1974,14 @@ mod ctrl {
                 km_libs::KeyCode::Num5 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("Num5")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num0.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -1999,12 +1990,14 @@ mod ctrl {
                 km_libs::KeyCode::F1 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("F1")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Minus.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2013,12 +2006,14 @@ mod ctrl {
                 km_libs::KeyCode::F2 => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("F2")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Equal.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2026,7 +2021,7 @@ mod ctrl {
                 // Alt + F3 -> 3152
                 km_libs::KeyCode::F3 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num3.click();
@@ -2037,7 +2032,9 @@ mod ctrl {
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num2.click();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2045,7 +2042,7 @@ mod ctrl {
                 // Alt + F4 -> 5231
                 km_libs::KeyCode::F4 => {
                     if alt_btn.load(Ordering::Relaxed) {
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num5.click();
@@ -2056,7 +2053,9 @@ mod ctrl {
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num1.click();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2065,12 +2064,14 @@ mod ctrl {
                 km_libs::KeyCode::KeyQ => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyQ")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F5.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2079,12 +2080,14 @@ mod ctrl {
                 km_libs::KeyCode::KeyW => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyW")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F6.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2093,12 +2096,14 @@ mod ctrl {
                 km_libs::KeyCode::KeyE => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyE")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F7.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2107,12 +2112,14 @@ mod ctrl {
                 km_libs::KeyCode::KeyR => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyR")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F8.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2121,12 +2128,14 @@ mod ctrl {
                 km_libs::KeyCode::KeyA => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyA")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F9.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2135,12 +2144,14 @@ mod ctrl {
                 km_libs::KeyCode::KeyS => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyS")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F10.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2149,12 +2160,14 @@ mod ctrl {
                 km_libs::KeyCode::KeyD => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyD")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F11.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2163,12 +2176,14 @@ mod ctrl {
                 km_libs::KeyCode::KeyF => {
                     if alt_btn.load(Ordering::Relaxed) {
                         press[&String::from("KeyF")].store(true, Ordering::Relaxed);
-                        tx.send(Box::new(|| {
+                        tx.send(Box::new(move || {
                             km_libs::KeyCode::Alt.up();
                             km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F12.down();
                             km_libs::sleep(SLEEP_MINISEC);
-                            km_libs::KeyCode::Alt.down();
+                            if alt_btn.load(Ordering::Relaxed) {
+                                km_libs::KeyCode::Alt.down();
+                            }
                         })).unwrap();
                         return (self.clone(), EventHandleReturn::INTERCEPT);
                     }
@@ -2186,11 +2201,11 @@ mod ctrl {
                     return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
                 }
                 km_libs::KeyCode::Alt => {
-                    tx.send(Box::new(|| {
+                    tx.send(Box::new(move || {
+                        alt_btn.store(false, Ordering::Relaxed);
                         // alt up 可多發沒關係, 確保放開 alt 時能確實放開
                         km_libs::KeyCode::Alt.up();
                     })).unwrap();
-                    self.alt_btn.store(false, Ordering::Relaxed);
                 }
                 km_libs::KeyCode::Num1 => {
                     if press[&String::from("Num1")].load(Ordering::Relaxed) {
