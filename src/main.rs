@@ -1897,7 +1897,7 @@ mod ctrl {
         fn do_keyboard_down(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             let alt_btn = self.alt_btn.clone();
             let press = self.press.clone();
-            const SLEEP_MINISEC: u64 = 30;
+            const SLEEP_MINISEC: u64 = 20;
             match event {
                 // Alt
                 km_libs::KeyCode::Alt => {
@@ -2196,7 +2196,7 @@ mod ctrl {
         fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             let alt_btn = self.alt_btn.clone();
             let press = self.press.clone();
-            const SLEEP_MINISEC: u64 = 50;
+            const SLEEP_MINISEC: u64 = 55;
             match event {
                 km_libs::KeyCode::ControlRight => {
                     return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
