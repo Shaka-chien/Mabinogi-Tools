@@ -2196,7 +2196,7 @@ mod ctrl {
         fn do_keyboard_up(self: Arc<Self>, event: km_libs::KeyCode, tx: mpsc::Sender<Box<dyn FnOnce() + Send>>) -> (Arc<dyn State>, EventHandleReturn) {
             let alt_btn = self.alt_btn.clone();
             let press = self.press.clone();
-            const SLEEP_MINISEC: u64 = 55;
+            const SLEEP_MINISEC: u64 = 50;
             match event {
                 km_libs::KeyCode::ControlRight => {
                     return (Arc::new(WaitingState::new()), EventHandleReturn::CONTINUE);
@@ -2210,7 +2210,7 @@ mod ctrl {
                 km_libs::KeyCode::Num1 => {
                     if press[&String::from("Num1")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num6.up();
                         })).unwrap();
                         press[&String::from("Num1")].store(false, Ordering::Relaxed);
@@ -2220,7 +2220,7 @@ mod ctrl {
                 km_libs::KeyCode::Num2 => {
                     if press[&String::from("Num2")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num7.up();
                         })).unwrap();
                         press[&String::from("Num2")].store(false, Ordering::Relaxed);
@@ -2230,7 +2230,7 @@ mod ctrl {
                 km_libs::KeyCode::Num3 => {
                     if press[&String::from("Num3")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num8.up();
                         })).unwrap();
                         press[&String::from("Num3")].store(false, Ordering::Relaxed);
@@ -2240,7 +2240,7 @@ mod ctrl {
                 km_libs::KeyCode::Num4 => {
                     if press[&String::from("Num4")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num9.up();
                         })).unwrap();
                         press[&String::from("Num4")].store(false, Ordering::Relaxed);
@@ -2250,7 +2250,7 @@ mod ctrl {
                 km_libs::KeyCode::Num5 => {
                     if press[&String::from("Num5")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Num0.up();
                         })).unwrap();
                         press[&String::from("Num5")].store(false, Ordering::Relaxed);
@@ -2260,7 +2260,7 @@ mod ctrl {
                 km_libs::KeyCode::F1 => {
                     if press[&String::from("F1")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Minus.up();
                         })).unwrap();
                         press[&String::from("F1")].store(false, Ordering::Relaxed);
@@ -2270,7 +2270,7 @@ mod ctrl {
                 km_libs::KeyCode::F2 => {
                     if press[&String::from("F2")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::Equal.up();
                         })).unwrap();
                         press[&String::from("F2")].store(false, Ordering::Relaxed);
@@ -2280,7 +2280,7 @@ mod ctrl {
                 km_libs::KeyCode::KeyQ => {
                     if press[&String::from("KeyQ")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F5.up();
                         })).unwrap();
                         press[&String::from("KeyQ")].store(false, Ordering::Relaxed);
@@ -2290,7 +2290,7 @@ mod ctrl {
                 km_libs::KeyCode::KeyW => {
                     if press[&String::from("KeyW")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F6.up();
                         })).unwrap();
                         press[&String::from("KeyW")].store(false, Ordering::Relaxed);
@@ -2300,7 +2300,7 @@ mod ctrl {
                 km_libs::KeyCode::KeyE => {
                     if press[&String::from("KeyE")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F7.up();
                         })).unwrap();
                         press[&String::from("KeyE")].store(false, Ordering::Relaxed);
@@ -2310,7 +2310,7 @@ mod ctrl {
                 km_libs::KeyCode::KeyR => {
                     if press[&String::from("KeyR")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F8.up();
                         })).unwrap();
                         press[&String::from("KeyR")].store(false, Ordering::Relaxed);
@@ -2320,7 +2320,7 @@ mod ctrl {
                 km_libs::KeyCode::KeyA => {
                     if press[&String::from("KeyA")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F9.up();
                         })).unwrap();
                         press[&String::from("KeyA")].store(false, Ordering::Relaxed);
@@ -2330,7 +2330,7 @@ mod ctrl {
                 km_libs::KeyCode::KeyS => {
                     if press[&String::from("KeyS")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F10.up();
                         })).unwrap();
                         press[&String::from("KeyS")].store(false, Ordering::Relaxed);
@@ -2340,7 +2340,7 @@ mod ctrl {
                 km_libs::KeyCode::KeyD => {
                     if press[&String::from("KeyD")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F11.up();
                         })).unwrap();
                         press[&String::from("KeyD")].store(false, Ordering::Relaxed);
@@ -2350,7 +2350,7 @@ mod ctrl {
                 km_libs::KeyCode::KeyF => {
                     if press[&String::from("KeyF")].load(Ordering::Relaxed) {
                         tx.send(Box::new(|| {
-                            km_libs::sleep(SLEEP_MINISEC); // 必需休息一下，否則 down 與 up 相隔太近遊戲可能會收不到事件
+                            km_libs::sleep(SLEEP_MINISEC);
                             km_libs::KeyCode::F12.up();
                         })).unwrap();
                         press[&String::from("KeyF")].store(false, Ordering::Relaxed);
