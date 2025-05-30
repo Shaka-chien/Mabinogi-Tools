@@ -557,13 +557,13 @@ mod km_libs {
         ScrollLock,
         Pause,
         NumLock,
-        BackQuote,
 
         VolumeMute,
         VolumeUp,
         VolumeDown,
         MediaPlayPause,
 
+        BackQuote, // `
         // 數字1~0
         Num1,
         Num2,
@@ -1479,7 +1479,8 @@ mod ctrl {
             let dy = self.dy.clone();
             match event {
                 km_libs::MouseEvent::Move { x, y } => {
-                    let (_dx, _dy) = km_libs::convert_to_absolute(x, y);
+                    //let (_dx, _dy) = km_libs::convert_to_absolute(x, y);
+                    let (_dx, _dy) = km_libs::MouseEvent::get_mouse_position1();
                     dx.store(_dx, Ordering::Relaxed);
                     dy.store(_dy, Ordering::Relaxed);
                 }
@@ -1818,7 +1819,6 @@ mod ctrl {
      * Alt + F2 ==> =
      * Alt + F3 ==> 3152
      * Alt + F4 ==> 5231
-     * Alt + + `  ==> Shift + Tab
      * Alt + QWER ==> F5~F8
      * Alt + ASDF ==> F9~F12)
      */
